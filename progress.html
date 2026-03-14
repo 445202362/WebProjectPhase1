@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Progress & Statistics — Smart Study Planner</title>
+ 
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+ 
+<div class="layout">
+ 
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <img src="Logo.png" alt="Brain Route Logo">
+      </div>
+      <div class="logo-text">
+        Brain Route
+        <small>Planner</small>
+      </div>
+    </div>
+ 
+    <div class="nav-item" data-page="dashboard.html">Dashboard</div>
+    <div class="nav-item" data-page="courses.html">Courses</div>
+    <div class="nav-item" data-page="deadlines.html">Deadlines</div>
+    <div class="nav-item" data-page="study-plan.html">Study Plan</div>
+    <div class="nav-item active" data-page="progress.html">Progress</div>
+    <div class="nav-item" data-page="reminders.html">Reminders</div>
+ 
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-student-initial">S</div>
+      <div class="user-details">
+        <div class="user-name" id="sidebar-student-name">Student</div>
+        <div class="user-status">Logged in</div>
+      </div>
+    </div>
+ 
+    <div class="nav-item logout" data-page="login.html">Log Out</div>
+  </div>
+ 
+  <!-- Main Area -->
+  <div class="main-area">
+    <div class="page-header">
+      <h2>Progress & Statistics</h2>
+      <div class="header-actions">
+        <div class="user-avatar-header">S</div>
+      </div>
+    </div>
+ 
+    <div class="page-content">
+ 
+      <!-- Stat Cards -->
+      <div class="stats-grid stats-grid-4">
+        <div class="stat-card bg-lavender">
+          <div class="stat-number">20</div>
+          <div class="stat-label">Total Sessions</div>
+        </div>
+        <div class="stat-card bg-green">
+          <div class="stat-number">78%</div>
+          <div class="stat-label">Completion Rate</div>
+        </div>
+        <div class="stat-card bg-soft-red">
+          <div class="stat-number">2</div>
+          <div class="stat-label">Missed Sessions</div>
+        </div>
+        <div class="stat-card bg-yellow">
+          <div class="stat-number">42h</div>
+          <div class="stat-label">Total Hours</div>
+        </div>
+      </div>
+ 
+      <!-- Mark Sessions -->
+      <div class="widget">
+        <div class="widget-header">
+          <h3>Mark Sessions</h3>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Session</th>
+                <th>Course</th>
+                <th>Date</th>
+                <th>Duration</th>
+                <th>Mark As</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Study CS101</td>
+                <td><strong>CS101</strong></td>
+                <td>Nov 14</td>
+                <td>1.5 hrs</td>
+                <td>
+                  <div class="table-actions">
+                    <button class="button button-warning button-small">Done</button>
+                    <button class="button button-danger button-small">Missed</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>Review MATH203</td>
+                <td><strong>MATH203</strong></td>
+                <td>Nov 14</td>
+                <td>2 hrs</td>
+                <td>
+                  <div class="table-actions">
+                    <button class="button button-warning button-small">Done</button>
+                    <button class="button button-danger button-small">Missed</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>ENG305 Essay</td>
+                <td><strong>ENG305</strong></td>
+                <td>Nov 13</td>
+                <td>1 hr</td>
+                <td>
+                  <span class="status-badge badge-success">Completed</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+ 
+      <!-- Weekly Hours Chart -->
+      <div class="widget">
+        <div class="widget-header">
+          <h3>Weekly Hours</h3>
+        </div>
+        <div class="bar-chart">
+          <div class="bar-column">
+            <div class="bar bg-lavender" style="height:40px"></div>
+            <span>Sun</span>
+          </div>
+          <div class="bar-column">
+            <div class="bar bg-green" style="height:62px"></div>
+            <span>Mon</span>
+          </div>
+          <div class="bar-column">
+            <div class="bar bg-soft-red" style="height:24px"></div>
+            <span>Tue</span>
+          </div>
+          <div class="bar-column">
+            <div class="bar bg-yellow" style="height:70px"></div>
+            <span>Wed</span>
+          </div>
+          <div class="bar-column">
+            <div class="bar bg-green" style="height:50px"></div>
+            <span>Thu</span>
+          </div>
+          <div class="bar-column">
+            <div class="bar" style="height:16px; background:var(--background-card)"></div>
+            <span>Fri</span>
+          </div>
+          <div class="bar-column">
+            <div class="bar bg-mint" style="height:56px"></div>
+            <span>Sat</span>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- Progress by Course -->
+      <div class="widget">
+        <div class="widget-header">
+          <h3>Progress by Course</h3>
+        </div>
+ 
+        <div class="progress-item">
+          <div class="progress-header">
+            <span class="fw-700">CS101</span>
+            <span class="fw-700">85%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width:85%"></div>
+          </div>
+        </div>
+ 
+        <div class="progress-item">
+          <div class="progress-header">
+            <span class="fw-700">MATH203</span>
+            <span class="fw-700">60%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width:60%"></div>
+          </div>
+        </div>
+ 
+        <div class="progress-item">
+          <div class="progress-header">
+            <span class="fw-700">ENG305</span>
+            <span class="fw-700">90%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width:90%"></div>
+          </div>
+        </div>
+ 
+      </div>
+ 
+    </div><!-- page-content -->
+  </div><!-- main-area -->
+ 
+</div><!-- layout -->
+ 
+</body>
+</html>
