@@ -1397,3 +1397,4 @@ body { background-color: var(--background-outer); }
       box-shadow: 2px 2px 0 var(--text-dark);
     }
     .remove-range { cursor: pointer; color: var(--soft-red); font-weight: 900; font-size: 16px; }
+
