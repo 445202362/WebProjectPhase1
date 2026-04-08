@@ -701,18 +701,20 @@ textarea:focus {
 .fw-600 { font-weight: 600; }
 .fw-700 { font-weight: 700; }
 
-/* Font sizes */
 .fs-11 { font-size: 11px; }
 .fs-12 { font-size: 12px; }
-.fs-13 { font-size: 13px; }  --pastel-mint:     #E0F2F1;
-  --pastel-red:      #FFEBEE;
+.fs-13 { font-size: 13px; }
+
+:root {
+  /* Pastel colors */
+  --pastel-mint:    #E0F2F1;
+  --pastel-red:     #FFEBEE;
 
   /* Status colors – for badges */
-  --status-success:   #027A48;
-  --status-danger:    #B42318;
-  --status-warning:   #FDA29B;
+  --status-success:  #027A48;
+  --status-danger:   #B42318;
+  --status-warning:  #FDA29B;
 }
-
 *,
 *::before,
 *::after {
@@ -1364,3 +1366,35 @@ textarea:focus {
 .fs-11 { font-size: 11px; }
 .fs-12 { font-size: 12px; }
 .fs-13 { font-size: 13px; }
+
+/* --- Study Plan Styles --- */
+body { background-color: var(--background-outer); }
+    .layout { border: none; box-shadow: none; width: 100%; height: 100vh; }
+
+    
+    .weekly-grid { gap: 10px; margin-top: 20px; }
+    .study-slot { min-height: 60px; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
+    .slot-time { font-size: 9px; opacity: 0.7; margin-top: 4px; }
+   
+    .header-with-stats { display: flex; align-items: center; gap: 12px; }
+    .total-hours-pill { 
+        font-size: 11px; background: var(--text-dark); color: #fff; 
+        padding: 4px 12px; border-radius: 20px; font-weight: 500;
+    }
+
+   
+    .custom-range-row { 
+      display: flex; gap: 15px; align-items: flex-end; 
+      background: var(--background-outer); padding: 20px; border-radius: 12px;
+      border: 2px dashed var(--border-color); margin-bottom: 25px;
+    }
+    .active-ranges-list { margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px; }
+    .range-tag {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 8px 15px; background: var(--pastel-lavender);
+      border: var(--border-width) solid var(--border-color);
+      border-radius: 8px; font-size: 13px; font-weight: 600;
+      box-shadow: 2px 2px 0 var(--text-dark);
+    }
+    .remove-range { cursor: pointer; color: var(--soft-red); font-weight: 900; font-size: 16px; }
+
