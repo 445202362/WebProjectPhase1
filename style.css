@@ -85,6 +85,7 @@ hr {
 .layout {
   display: flex;
   min-height: calc(100vh - 60px);
+  border-radius: var(--border-radius);
   border-radius: 0;
   overflow: hidden;
   border: var(--border-width) solid var(--border-color);
@@ -352,8 +353,6 @@ hr {
 .badge-neutral  { background: var(--background-card);  color: var(--text-secondary); }
 .badge-success  { background: var(--pastel-green);    color: var(--status-success); }
 .badge-danger   { background: var(--pastel-red); color: var(--status-danger); }
-
-
 /* ============================================================
    8. TABLES – for deadlines, courses, etc.
    ============================================================ */
@@ -698,676 +697,83 @@ textarea:focus {
 .text-success   { color: var(--status-success); }
 
 /* Font weights */
-.fw-600 { font-weight: 600; }
+
+fw-600 { font-weight: 600; }
 .fw-700 { font-weight: 700; }
 
+/* Font sizes */
 .fs-11 { font-size: 11px; }
 .fs-12 { font-size: 12px; }
 .fs-13 { font-size: 13px; }
 
-:root {
-  /* Pastel colors */
-  --pastel-mint:    #E0F2F1;
-  --pastel-red:     #FFEBEE;
-
-  /* Status colors – for badges */
-  --status-success:  #027A48;
-  --status-danger:   #B42318;
-  --status-warning:  #FDA29B;
-}
-*,
-*::before,
-*::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Poppins', sans-serif;
-  background: var(--background-outer);
-  color: var(--text-primary);
-  /* removed padding so layout fills full screen */
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Poppins', sans-serif;
-  color: var(--text-dark);
-}
-
-a {
-  color: var(--text-dark);
-  font-weight: 700;
-  text-decoration: underline;
-}
-
-hr {
-  border: none;
-  border-top: var(--border-width) solid var(--border-color);
-  margin: 14px 0;
-}
-
-
 /* ============================================================
-   2. LAYOUT – main layout structure
+   14. COURSES PAGE – badge colors & form helpers
    ============================================================ */
 
-.layout {
-  display: flex;
-  width: 100vw;
-  height: 100vh;
-  /* removed border-radius, box-shadow, border so it fills screen edge-to-edge */
-  overflow: hidden;
-}
+/* Course code badge colors (one per course) */
+.badge-lavender { background: var(--pastel-lavender); color: var(--text-dark); }
+.badge-mint     { background: var(--pastel-mint);     color: var(--text-dark); }
+.badge-yellow   { background: var(--pastel-yellow);   color: var(--text-dark); }
+.badge-pink     { background: var(--pastel-pink);     color: var(--text-dark); }
+.badge-green    { background: var(--pastel-green);    color: var(--text-dark); }
+.badge-lavender { background: var(--pastel-lavender); color: var(--text-dark); }
+.badge-mint     { background: var(--pastel-mint);     color: var(--text-dark); }
+.badge-pink     { background: var(--pastel-pink);     color: var(--text-dark); }
 
-/* Right side (everything except sidebar) */
-.main-area {
-  flex: 1;
-  background: var(--background-page);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* Scrollable main area below the page header */
-.page-content {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-
-/* ============================================================
-   3. SIDEBAR & NAVIGATION
-   ============================================================ */
-
-.sidebar {
-  width: 178px;
-  min-width: 178px;
-  background: var(--sidebar-background);
-  padding: 20px 0;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow-y: auto;
-}
-
-.sidebar-logo {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 0 16px 18px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  margin-bottom: 10px;
-}
-
-.logo-icon {
-  background: transparent;
-}
-
-.logo-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.logo-text {
-  font-size: 18px;
-  font-weight: 700;
-  color: #fff;
-  line-height: 1.3;
-}
-
-.logo-text small {
-  display: block;
-  font-weight: 400;
-  font-size: 14px;
-  color: var(--sidebar-text-light);
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 9px 16px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--sidebar-text);
-  cursor: pointer;
-  border-left: 3px solid transparent;
-  text-decoration: none;
-  transition: background 0.15s, color 0.15s;
-}
-
-.nav-item:hover {
-  background: rgba(255,255,255,0.06);
-  color: #fff;
-}
-
-.nav-item.active {
-  color: #fff;
-  background: rgba(255,255,255,0.1);
-  border-left-color: var(--pastel-yellow);
-}
-
-/* Logout button */
-.nav-item.logout {
-  margin-top: 0 12px;
-  color: var(--status-warning);
-}
-
-.nav-item.logout:hover {
-  background: rgba(255,255,255,0.06);
-  color: #ff8a80;
-}
-
-/* Sidebar user profile card */
-.sidebar-user {
-  margin: 8px;
-  padding: 10px 12px;
-  background: rgba(255,255,255,0.07);
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.1);
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
-.user-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: var(--pastel-yellow);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-dark);
-  flex-shrink: 0;
-}
-
-.user-details {
-  overflow: hidden;
-}
-
-.user-name {
-  font-size: 11px;
-  font-weight: 600;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.user-status {
-  font-size: 10px;
-  color: var(--sidebar-text-light);
-}
-
-
-/* ============================================================
-   4. PAGE HEADER – at the top of every page
-   ============================================================ */
-
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 22px;
-  background: var(--background-white);
-  border-bottom: var(--border-width) solid var(--border-color);
-  flex-shrink: 0;
-}
-
-.page-header h2 {
-  font-size: 15px;
-  font-weight: 700;
-}
-
-/* User avatar  */
-.user-avatar-header {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  background: var(--pastel-yellow);
-  border: var(--border-width) solid var(--border-color);
-  color: var(--text-dark);
-  font-size: 13px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-
-/* ============================================================
-   5. WIDGETS – the white boxes with borders and shadows
-   ============================================================ */
-
-.widget {
-  background: var(--background-white);
-  border-radius: var(--border-radius);   /* now 0px – sharp edges */
-  padding: 18px;
-  border: var(--border-width) solid var(--border-color);
-  box-shadow: 3px 3px 0 var(--text-dark);
-}
-
-.widget-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-.widget-header h3 {
-  font-size: 13px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-
-/* ============================================================
-   6. BUTTONS – different styles for different actions
-   ============================================================ */
-.button {
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  border: var(--border-width) solid var(--border-color);
-  box-shadow: 2px 2px 0 var(--text-dark);
-  transition: box-shadow 0.1s, transform 0.1s;
-  text-decoration: none;
-}
-
-.button:active {
-  box-shadow: none;
-  transform: translate(2px, 2px);
-}
-
-.button-primary   { background: var(--text-dark);       color: #fff; }
-.button-warning   { background: var(--pastel-yellow);   color: var(--text-dark); }
-.button-secondary { background: var(--background-white); color: var(--text-dark); }
-.button-danger    { background: var(--pastel-red);       color: var(--status-danger); }
-
-.button-small  { padding: 4px 9px;   font-size: 11px; border-radius: 6px; box-shadow: 1px 1px 0 var(--text-dark); }
-.button-large  { padding: 10px 20px; font-size: 14px; }
-.button-block  { width: 100%; justify-content: center; padding: 10px; font-size: 13px; }
-
-
-/* ============================================================
-   7. STATUS BADGES – small status labels
-   ============================================================ */
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  border: var(--border-width) solid var(--border-color);
-}
-
-.badge-warning { background: var(--pastel-yellow); color: var(--text-dark); }
-.badge-neutral { background: var(--background-card); color: var(--text-secondary); }
-.badge-success { background: var(--pastel-green);   color: var(--status-success); }
-.badge-danger  { background: var(--pastel-red);     color: var(--status-danger); }
-
-
-/* ============================================================
-   8. TABLES – for deadlines, courses, etc.
-   ============================================================ */
-.table-container {
-  overflow-x: auto;
-  border-radius: var(--border-radius);   /* now 0px */
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-thead { background: var(--background-card); }
-
-th {
-  text-align: left;
-  padding: 10px 14px;
-  color: var(--text-secondary);
-  font-weight: 700;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: var(--border-width) solid var(--border-color);
-}
-
-td {
-  padding: 10px 14px;
-  border-bottom: 1px solid #E4E7EC;
-  vertical-align: middle;
-}
-
-tbody tr:hover         { background: #FAFBFC; }
-tbody tr:last-child td { border-bottom: none; }
-
-/* Actions inside table cells (buttons) */
-.table-actions {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-}
-
-
-/* ============================================================
-   9. FORMS & INPUTS
-   ============================================================ */
-
-.form-row {
-  display: flex;
+/* Container using Grid */
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 60px); 
   gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
+  margin-top: 10px;
 }
 
-.form-field {
-  flex: 1;
-  min-width: 110px;
+/* Hide the actual checkbox  */
+.day-toggle {
+  display: none;
 }
 
-.form-group { margin-bottom: 12px; }
-
-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 5px;
-}
-
-input,
-select,
-textarea {
-  width: 100%;
-  padding: 9px 13px;
-  border: var(--border-width) solid var(--border-color);
-  border-radius: 8px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 13px;
-  color: var(--text-primary);
-  background: var(--background-page);
-  outline: none;
-  transition: background 0.15s, box-shadow 0.15s;
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-  background: var(--background-white);
-  box-shadow: 2px 2px 0 var(--text-dark);
-}
-
-/* Input with an icon inside */
-.input-with-icon { position: relative; }
-
-.input-with-icon svg {
-  position: absolute;
-  left: 11px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-secondary);
-  pointer-events: none;
-}
-
-.input-with-icon input { padding-left: 34px; }
-
-.forgot-password {
-  font-size: 11px;
-  color: var(--text-secondary);
-  text-align: right;
-  margin-top: 4px;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-
-/* ============================================================
-   10. STAT CARDS & PROGRESS BARS (dashboard)
-   ============================================================ */
-
-.stats-grid   { display: grid; gap: 12px; }
-.stats-grid-2 { grid-template-columns: repeat(2, 1fr); }
-.stats-grid-3 { grid-template-columns: repeat(3, 1fr); }
-.stats-grid-4 { grid-template-columns: repeat(4, 1fr); }
-
-.stat-card {
-  border-radius: var(--border-radius);   /* now 0px */
-  padding: 16px;
-  border: var(--border-width) solid var(--border-color);
-  box-shadow: 3px 3px 0 var(--text-dark);
-  text-align: center;
-}
-
-.stat-card .stat-number { font-size: 24px; font-weight: 700; color: var(--text-dark); }
-.stat-card .stat-label  { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
-
-/* Simple bar chart */
-.bar-chart {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  height: 80px;
-  margin-bottom: 8px;
-}
-
-.bar-column {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.bar-column .bar {
-  width: 100%;
-  border-radius: 4px 4px 0 0;
-  border: var(--border-width) solid var(--border-color);
-}
-
-.bar-column span { font-size: 10px; color: var(--text-secondary); }
-
-/* Progress bars (for courses) */
-.progress-item            { margin-bottom: 12px; }
-.progress-item:last-child { margin-bottom: 0; }
-
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  margin-bottom: 5px;
-}
-
-.progress-bar-bg {
-  height: 8px;
-  background: var(--background-card);
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-}
-
-.progress-bar-fill {
-  height: 100%;
-  border-radius: 3px;
-  background: var(--text-dark);
-}
-
-
-/* ============================================================
-   11. STUDY PLAN & AVAILABILITY GRIDS
-   ============================================================ */
-
-.weekly-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-}
-
-.weekday-column h4 {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-align: center;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.study-slot {
-  border-radius: 6px;
-  padding: 5px 3px;
-  font-size: 10px;
-  font-weight: 600;
-  text-align: center;
-  margin-bottom: 4px;
-  line-height: 1.35;
-  border: var(--border-width) solid var(--border-color);
-}
-
-.slot-yellow   { background: var(--pastel-yellow); }
-.slot-green    { background: var(--pastel-green); }
-.slot-pink     { background: var(--pastel-pink); }
-.slot-lavender { background: var(--pastel-lavender); }
-.slot-mint     { background: var(--pastel-mint); }
-
-.availability-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-}
-
-.availability-column h4 {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-align: center;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.availability-slot {
-  height: 26px;
-  border-radius: 6px;
-  margin-bottom: 4px;
-  font-size: 9px;
-  font-weight: 600;
+/* Default state of the pill */
+.day-pill {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  border: var(--border-width) solid var(--border-color);
-  transition: background 0.15s;
-}
-
-.availability-slot.free { background: var(--pastel-yellow); color: var(--text-dark); }
-.availability-slot.busy { background: var(--background-card); color: var(--text-secondary); }
-
-
-/* ============================================================
-   12. REMINDERS – toggles and notification rows
-   ============================================================ */
-
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 40px;
-  height: 22px;
-  flex-shrink: 0;
-}
-
-.toggle-switch input { display: none; }
-
-.toggle-slider {
-  position: absolute;
-  inset: 0;
+  padding: 8px 12px;
   background: var(--background-card);
-  border-radius: 22px;
+  color: var(--text-secondary);
+  border: var(--border-width) solid transparent; /* Keeps size consistent */
+  border-radius: 40px; 
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.25s;
-  border: var(--border-width) solid var(--border-color);
+  transition: all 0.2s ease;
+  user-select: none;
 }
 
-.toggle-slider::before {
-  content: '';
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--text-dark);
-  left: 2px;
-  top: 2px;
-  transition: 0.25s;
+/* Hover effect for better UX */
+.day-pill:hover {
+  background: var(--background-outer);
 }
 
-.toggle-switch input:checked + .toggle-slider           { background: var(--pastel-yellow); }
-.toggle-switch input:checked + .toggle-slider::before   { transform: translateX(18px); }
-
-/* Notification row */
-.notification-row {
+/* ACTIVE STATE: When the hidden checkbox is checked */
+.day-toggle:checked + .day-pill {
+  background: var(--pastel-lavender); 
+  color: var(--text-dark);
+  border-color: var(--border-color);
+  /* Optional: add a small shadow like your buttons */
+  box-shadow: 2px 2px 0 var(--text-dark);
+}
+/* Form action buttons row */
+.form-actions {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid #E4E7EC;
+  gap: 8px;
+  margin-top: 6px;
 }
 
-.notification-row:last-child { border-bottom: none; }
-.notification-row h4         { font-size: 13px; font-weight: 600; }
-.notification-row p          { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
-
-
-/* ============================================================
-   13. UTILITIES – small helper classes
-   ============================================================ */
-
-.color-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  display: inline-block;
-  border: 1px solid var(--border-color);
-}
-
-.bg-yellow   { background: var(--pastel-yellow); }
-.bg-green    { background: var(--pastel-green); }
-.bg-pink     { background: var(--pastel-pink); }
-.bg-lavender { background: var(--pastel-lavender); }
-.bg-mint     { background: var(--pastel-mint); }
-.bg-soft-red { background: var(--pastel-red); }
-
-.text-muted   { color: var(--text-secondary); }
-.text-danger  { color: var(--status-danger); }
-.text-success { color: var(--status-success); }
-
-.fw-600 { font-weight: 600; }
-.fw-700 { font-weight: 700; }
-
-.fs-11 { font-size: 11px; }
-.fs-12 { font-size: 12px; }
-.fs-13 { font-size: 13px; }
-
-/* --- Study Plan Styles --- */
+/* ======================================================================
+--- Study Plan Styles --- 
+==========================================================================
+*/
 body { background-color: var(--background-outer); }
     .layout { border: none; box-shadow: none; width: 100%; height: 100vh; }
 
@@ -1398,3 +804,289 @@ body { background-color: var(--background-outer); }
     }
     .remove-range { cursor: pointer; color: var(--soft-red); font-weight: 900; font-size: 16px; }
 
+    /*======================================================================
+   16. LOGIN - style 
+   ===========================================================================*/
+body { 
+
+    margin: 0; 
+
+    padding: 0; 
+
+    font-family: 'Poppins', sans-serif; 
+
+    background-color: var(--background-outer); 
+
+} 
+
+ 
+
+.auth-layout { 
+
+    display: flex; 
+
+    width: 100vw; 
+
+    height: 100vh; 
+
+    overflow: hidden; 
+
+    border: var(--border-width) solid var(--border-color); 
+
+    box-shadow: 4px 4px 0 var(--text-dark); 
+
+} 
+
+ 
+
+/* ---- LEFT ---- */ 
+
+.auth-left { 
+
+    width: 45%; 
+
+    height: 100%; 
+
+    background-color: var(--sidebar-background); 
+
+    padding: 40px 50px 60px 50px; 
+
+    display: flex; 
+
+    flex-direction: column; 
+
+    justify-content: center; 
+
+    box-sizing: border-box; 
+
+} 
+
+ 
+
+.auth-brand { 
+
+    display: flex; 
+
+    align-items: center; 
+
+    gap: 12px; 
+
+    margin-bottom: 20px; 
+
+} 
+
+ 
+
+.auth-brand img { 
+
+    width: 200px; 
+
+    height: auto; 
+
+} 
+
+ 
+
+.auth-brand-name { 
+
+    font-size: 60px; 
+
+    font-weight: 700; 
+
+    color: #ffffff; 
+
+    white-space: nowrap; 
+
+} 
+
+ 
+
+.auth-title { 
+
+    font-size: 28px; 
+
+    font-weight: 700; 
+
+    color: #ffffff; 
+
+    line-height: 1.35; 
+
+    margin-bottom: 14px; 
+
+} 
+
+ 
+
+.auth-desc { 
+
+    font-size: 13px; 
+
+    color: var(--sidebar-text-light); 
+
+    line-height: 1.7; 
+
+    margin: 0; 
+
+} 
+
+ 
+
+.auth-features { 
+
+    list-style: none; 
+
+    padding: 0; 
+
+    margin: 28px 0 0 0; 
+
+    display: flex; 
+
+    flex-direction: column; 
+
+    gap: 12px; 
+
+} 
+
+ 
+
+.auth-feature { 
+
+    display: flex; 
+
+    align-items: center; 
+
+    gap: 10px; 
+
+    font-size: 13px; 
+
+    color: var(--sidebar-text-light); 
+
+} 
+
+ 
+
+.auth-feature svg { 
+
+    color: var(--pastel-yellow); 
+
+    flex-shrink: 0; 
+
+} 
+
+ 
+
+/* ---- RIGHT ---- */ 
+
+.auth-right { 
+
+    width: 55%; 
+
+    height: 100%; 
+
+    background-color: var(--background-white); 
+
+    padding: 60px 70px; 
+
+    display: flex; 
+
+    flex-direction: column; 
+
+    justify-content: center; 
+
+    box-sizing: border-box; 
+
+    overflow-y: auto; 
+
+} 
+
+ 
+
+.auth-form-title { 
+
+    font-size: 24px; 
+
+    font-weight: 700; 
+
+    color: var(--text-dark); 
+
+    margin: 0 0 6px 0; 
+
+} 
+
+ 
+
+.auth-form-sub { 
+
+    font-size: 13px; 
+
+    color: var(--text-secondary); 
+
+    margin: 0 0 30px 0; 
+
+} 
+
+ 
+
+.auth-form { 
+
+    display: flex; 
+
+    flex-direction: column; 
+
+    width: 100%; 
+
+} 
+
+ 
+
+.auth-form .form-group { 
+
+    margin-bottom: 18px; 
+
+} 
+
+ 
+
+.auth-form .form-row { 
+
+    display: flex; 
+
+    gap: 14px; 
+
+} 
+
+ 
+
+.auth-form .form-row .form-group { 
+
+    flex: 1; 
+
+    margin-bottom: 18px; 
+
+} 
+
+ 
+
+.auth-form .button { 
+
+    margin-top: 8px; 
+
+    font-family: 'Poppins', sans-serif; 
+
+    cursor: pointer; 
+
+} 
+
+ 
+
+.auth-switch { 
+
+    text-align: center; 
+
+    font-size: 13px; 
+
+    color: var(--text-secondary); 
+
+    margin-top: 20px; 
+
+}
