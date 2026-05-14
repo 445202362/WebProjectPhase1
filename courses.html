@@ -12,7 +12,381 @@
 <div class="layout">
  
   <!-- Sidebar -->
+  <div class="sidebar"><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Courses — Brain Route</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+ 
+<div class="layout">
+ 
+  <!-- Sidebar -->
   <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <img src="Logo.png" alt="Brain Route Logo">
+      </div>
+      <div class="logo-text">
+        Brain Route
+        <small>Planner</small>
+      </div>
+    </div>
+    <a class="nav-item" href="dashboard.html">Dashboard</a>
+    <a class="nav-item active" href="courses.html">Courses</a>
+    <a class="nav-item" href="deadlines.html">Deadlines</a>
+    <a class="nav-item" href="study-plan.html">Study Plan</a>
+    <a class="nav-item" href="progress.html">Progress</a>
+    <a class="nav-item" href="reminders.html">Reminders</a>
+    <a class="nav-item" href="chatbot.html">Chat With AI</a>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-initial">S</div>
+      <div class="user-details">
+        <div class="user-name" id="sidebar-name">Student</div>
+        <div class="user-status">Logged in</div>
+      </div>
+    </div>
+    <a class="nav-item logout" id="logout-btn" href="#">Log Out</a>
+  </div>
+ 
+  <!-- Main Area -->
+  <div class="main-area">
+    <div class="page-header">
+      <h2>Manage Courses</h2>
+      <div class="header-actions">
+        <div class="user-avatar-header" id="header-initial">S</div>
+      </div>
+    </div>
+ 
+    <div class="page-content">
+ 
+      <!-- All Courses Table -->
+      <div class="widget">
+        <div class="widget-header">
+          <h3>All Courses</h3>
+          <!-- Live count updates in JS -->
+          <span class="status-badge badge-neutral" id="course-count">0 courses</span>
+        </div>
+ 
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>COURSE CODE</th>
+                <th>COURSE NAME</th>
+                <th>STUDY DAYS</th>
+                <th>ASSIGNMENTS</th>
+                <th>EXAMS</th>
+                <th>ACTIONS</th>
+              </tr>
+            </thead>
+            <!-- Rows are injected here by renderCourses() -->
+            <tbody id="courses-tbody">
+              <tr>
+                <td colspan="6" class="td-empty">
+                  Loading courses…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+ 
+      <!-- Add New Course Form -->
+      <div class="widget">
+        <div class="widget-header">
+          <h3>Add New Course</h3>
+        </div>
+ 
+        <!-- Error / success feedback -->
+        <p id="add-error" class="error-msg"></p>
+ 
+        <div class="form-row">
+          <div class="form-field">
+            <label for="course-code">COURSE CODE</label>
+            <input type="text" id="course-code" placeholder="e.g. CS101" maxlength="20">
+          </div>
+          <div class="form-field">
+            <label for="course-name">COURSE NAME</label>
+            <input type="text" id="course-name" placeholder="e.g. Introduction to Programming" maxlength="100">
+          </div>
+        </div>
+ 
+        <div class="form-group">
+          <label>STUDY DAYS</label>
+          <div class="days-grid">
+            <input type="checkbox" id="day-sun" class="day-toggle" hidden>
+            <label for="day-sun" class="day-pill">Sun</label>
+ 
+            <input type="checkbox" id="day-mon" class="day-toggle" hidden>
+            <label for="day-mon" class="day-pill">Mon</label>
+ 
+            <input type="checkbox" id="day-tue" class="day-toggle" hidden>
+            <label for="day-tue" class="day-pill">Tue</label>
+ 
+            <input type="checkbox" id="day-wed" class="day-toggle" hidden>
+            <label for="day-wed" class="day-pill">Wed</label>
+ 
+            <input type="checkbox" id="day-thu" class="day-toggle" hidden>
+            <label for="day-thu" class="day-pill">Thu</label>
+          </div>
+        </div>
+ 
+        <div class="form-actions">
+          <button class="button button-primary" id="add-btn">+ Add Course</button>
+          <button class="button button-secondary" id="clear-btn">Clear</button>
+        </div>
+      </div>
+ 
+    </div>
+  </div>
+</div>
+ 
+<!-- ── Custom confirm modal ────────────────────────────────────── -->
+<div id="confirm-overlay" class="modal-overlay">
+  <div class="modal-card">
+    <h4 id="modal-title"   class="modal-title"></h4>
+    <p  id="modal-message" class="modal-message"></p>
+    <div class="modal-actions">
+      <button id="confirm-cancel" class="button button-secondary">Cancel</button>
+      <button id="confirm-ok"     class="button button-danger">Delete</button>
+    </div>
+  </div>
+</div>
+ 
+<script type="module">
+  import { auth, db } from "./firebase-config.js";
+  import {
+    onAuthStateChanged, signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    collection, addDoc, getDocs, deleteDoc, doc, getDoc, query, where
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+ 
+  // ── Auth guard: redirect to login if not signed in ────────────
+  // We also use the user object to get their UID for Firestore paths
+  let currentUser = null;
+ 
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "index.html";
+      return;
+    }
+    currentUser = user;
+ 
+    // Show user's first initial in sidebar and header
+    try {
+      const snap = await getDoc(doc(db, "users", user.uid, "profile", "info"));
+      if (snap.exists()) {
+        const { firstName } = snap.data();
+        const initial = firstName ? firstName[0].toUpperCase() : "S";
+        document.getElementById("sidebar-initial").textContent = initial;
+        document.getElementById("header-initial").textContent  = initial;
+        document.getElementById("sidebar-name").textContent    = firstName || "Student";
+      }
+    } catch (e) { /* keep default S */ }
+ 
+    // Load courses from Firestore since we have the UID now
+    await loadCourses();
+  });
+ 
+  // ── Logout ────────────────────────────────────────────────────
+  document.getElementById("logout-btn").addEventListener("click", async (e) => {
+    e.preventDefault();
+    await signOut(auth);
+    window.location.href = "index.html";
+  });
+ 
+  // ── Load and render courses from Firestore ──────────────────────
+  // Every add/delete operation calls this function again to refresh the view.
+  async function loadCourses() {
+    const tbody = document.getElementById("courses-tbody");
+    tbody.innerHTML = `<tr><td colspan="6" class="td-empty">Loading…</td></tr>`;
+
+    // Path: /users/{uid}/courses
+    const snapshot = await getDocs(collection(db, "users", currentUser.uid, "courses"));
+
+    // The student has no courses yet
+    if (snapshot.empty) {
+      tbody.innerHTML = `<tr><td colspan="6" class="td-empty">No courses yet. Add one below!</td></tr>`;
+      document.getElementById("course-count").textContent = "0 courses";
+      return;
+    }
+
+    // Fetch all deadlines once, then count per course code
+    const deadlinesSnap = await getDocs(collection(db, "users", currentUser.uid, "deadlines"));
+    const assignmentCount = {};
+    const examCount       = {};
+    deadlinesSnap.forEach((d) => {
+      const dl   = d.data();
+      const code = dl.courseCode;
+      if (dl.type === "exam") {
+        examCount[code] = (examCount[code] || 0) + 1;
+      } else if (dl.type === "assignment") {
+        assignmentCount[code] = (assignmentCount[code] || 0) + 1;
+      }
+    });
+
+    // Update badge count
+    document.getElementById("course-count").textContent = `${snapshot.size} course${snapshot.size !== 1 ? "s" : ""}`;
+
+    // Build table rows dynamically
+    tbody.innerHTML = "";
+    snapshot.forEach((docSnap) => {
+      const c   = docSnap.data();  // The course object
+      const id  = docSnap.id;      // Firestore document ID, needed for edit & delete
+
+      // Pick badge colour based on the course code
+      const badgeClasses = ["badge-lavender", "badge-mint", "badge-yellow", "badge-neutral"];
+      const badgeClass   = badgeClasses[id.charCodeAt(0) % badgeClasses.length];
+
+      // Study days joined with a separator for display
+      const daysDisplay = c.studyDays && c.studyDays.length > 0
+        ? c.studyDays.join(", ")
+        : "—";
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><span class="status-badge ${badgeClass}">${c.code}</span></td>
+        <td>${c.name}</td>
+        <td class="td-days">${daysDisplay}</td>
+        <td>${assignmentCount[c.code] || 0}</td>
+        <td>${examCount[c.code] || 0}</td>
+        <td>
+          <div class="table-actions">
+            <a href="courses-edit.html?id=${id}" class="button button-secondary button-small">Edit</a>
+            <button class="button button-danger button-small" data-id="${id}">Delete</button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Attach delete listeners after rows are in the DOM
+    tbody.querySelectorAll("button[data-id]").forEach((btn) => {
+      btn.addEventListener("click", () => deleteCourse(btn.dataset.id));
+    });
+  }
+ 
+  // ── Add Course ────────────────────────────────────────────────
+  document.getElementById("add-btn").addEventListener("click", async () => {
+    const errorEl = document.getElementById("add-error");
+    errorEl.textContent = "";
+ 
+    const code = document.getElementById("course-code").value.trim().toUpperCase();
+    const name = document.getElementById("course-name").value.trim();
+ 
+    // Collect which day checkboxes are checked
+    const days = ["Sun","Mon","Tue","Wed","Thu"].filter((day) => {
+      return document.getElementById(`day-${day.toLowerCase()}`).checked;
+    });
+ 
+    // Validation
+    if (!code || !name) {
+      errorEl.textContent = "Please fill in both course code and course name.";
+      return;
+    }
+ 
+    try {
+      // Write to Firestore: /users/{uid}/courses
+      await addDoc(collection(db, "users", currentUser.uid, "courses"), {
+        code:        code,
+        name:        name,
+        studyDays:   days,
+        assignments: 0,
+        exams:       0
+      });
+ 
+      // Clear the form
+      document.getElementById("course-code").value = "";
+      document.getElementById("course-name").value = "";
+      ["sun","mon","tue","wed","thu"].forEach(d => {
+        document.getElementById(`day-${d}`).checked = false;
+      });
+ 
+      // Re-fetch and re-render
+      await loadCourses();
+ 
+    } catch (err) {
+      errorEl.textContent = "Failed to add course. Please try again.";
+      console.error(err);
+    }
+  });
+ 
+  // ── Clear form ────────────────────────────────────────────────
+  document.getElementById("clear-btn").addEventListener("click", () => {
+    document.getElementById("course-code").value = "";
+    document.getElementById("course-name").value = "";
+    ["sun","mon","tue","wed","thu"].forEach(d => {
+      document.getElementById(`day-${d}`).checked = false;
+    });
+    document.getElementById("add-error").textContent = "";
+  });
+ 
+  // ── Custom confirm modal ──────────────────────────────────────
+  let pendingCallback = null;
+
+  function showConfirm(title, message, onOk) {
+    document.getElementById("modal-title").textContent   = title;
+    document.getElementById("modal-message").textContent = message;
+    document.getElementById("confirm-overlay").style.display = "flex";
+    pendingCallback = onOk; // save what to do on OK
+  }
+
+  function hideConfirm() {
+    document.getElementById("confirm-overlay").style.display = "none";
+    pendingCallback = null;
+  }
+
+  document.getElementById("confirm-cancel").addEventListener("click", hideConfirm);
+  document.getElementById("confirm-ok").addEventListener("click", async () => {
+    const fn = pendingCallback;
+    hideConfirm();
+    if (fn) await fn();
+  });
+
+  // ── Delete Course (with cascade delete of its deadlines) ──────
+  async function deleteCourse(courseId) {
+    // First get the course code so we can find matching deadlines
+    const courseSnap = await getDoc(doc(db, "users", currentUser.uid, "courses", courseId));
+    if (!courseSnap.exists()) return;
+    const courseCode = courseSnap.data().code;
+
+    showConfirm(
+      "Delete Course?",
+      `This will permanently delete "${courseCode}" and all its deadlines. This cannot be undone.`,
+      async () => {
+        try {
+          // Step 1: find and delete all deadlines that belong to this course
+          const deadlinesSnap = await getDocs(
+            query(collection(db, "users", currentUser.uid, "deadlines"),
+                  where("courseCode", "==", courseCode))
+          );
+          for (const d of deadlinesSnap.docs) {
+            await deleteDoc(doc(db, "users", currentUser.uid, "deadlines", d.id));
+          }
+
+          // Step 2: delete the course
+          await deleteDoc(doc(db, "users", currentUser.uid, "courses", courseId));
+
+          await loadCourses(); // refresh table
+        } catch (err) {
+          console.error("Delete failed:", err);
+        }
+      }
+    );
+  }
+ 
+
+</script>
+
+
+</body>
+</html>
     <div class="sidebar-logo">
       <div class="logo-icon">
         <img src="Logo.png" alt="Brain Route Logo">
