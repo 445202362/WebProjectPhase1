@@ -356,6 +356,15 @@
             await deleteDoc(doc(db, "users", currentUser.uid, "deadlines", d.id));
           }
 
+          // Step 1.5: Delete all study plan sessions for this course
+const studyPlanSnap = await getDocs(
+  query(collection(db, "users", currentUser.uid, "studyPlan"),
+        where("courseCode", "==", courseCode))
+);
+for (const doc of studyPlanSnap.docs) {
+  await deleteDoc(doc.ref);
+}
+
           // Step 2: delete the course
           await deleteDoc(doc(db, "users", currentUser.uid, "courses", courseId));
 
