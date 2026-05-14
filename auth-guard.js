@@ -12,15 +12,21 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// ── Logout ────────────────────────────────────────────────────
-// Waits for Firebase to fully sign out FIRST, then redirects
-// This prevents the bug where logout immediately logs you back in
-window.logOut = async function () {
-    try {
-        await signOut(auth);
-        // Only redirect AFTER Firebase confirms sign out is complete
-        window.location.href = "index.html";
-    } catch (error) {
-        console.error("Logout failed:", error);
-    }
-};
+// ── Auto-wire the logout link ─────────────────────────────────
+// Finds the .nav-item.logout element on any page and intercepts
+// the click to call signOut() before navigating to index.html.
+// This means NO HTML changes are needed on any page.
+const logoutLink = document.querySelector(".nav-item.logout");
+if (logoutLink) {
+    logoutLink.addEventListener("click", async (e) => {
+        e.preventDefault();
+        try {
+            await signOut(auth);
+            // onAuthStateChanged above will fire with null and
+            // redirect to index.html automatically
+        } catch (error) {
+            console.error("Logout failed:", error);
+            window.location.href = "index.html";
+        }
+    });
+}
