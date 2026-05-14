@@ -70,7 +70,7 @@ hr {
 
 .layout {
   display: flex;
-  min-height: calc(100vh - 60px);
+  height: 100vh;       /* exact viewport height — no gap at bottom */
   border-radius: 0;
   overflow: hidden;
   border: var(--border-width) solid var(--border-color);
@@ -91,8 +91,8 @@ hr {
   flex-direction: column;
   gap: 14px;
   overflow-y: auto;
+  flex: 1;             /* fills all remaining height inside .main-area */
 }
-
 
 /* ============================================================
    3. SIDEBAR & NAVIGATION
@@ -960,6 +960,7 @@ input:focus, select:focus, textarea:focus {
   /* Stack layout vertically */
   .layout {
     flex-direction: column;
+    height: auto;
     min-height: 100vh;
   }
 
