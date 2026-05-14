@@ -202,42 +202,56 @@
   async function loadCourses() {
     const tbody = document.getElementById("courses-tbody");
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:20px;">Loading…</td></tr>`;
- 
+
     // Path: /users/{uid}/courses
     const snapshot = await getDocs(collection(db, "users", currentUser.uid, "courses"));
-    
+
     // The student has no courses yet
     if (snapshot.empty) {
       tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:20px;">No courses yet. Add one below!</td></tr>`;
       document.getElementById("course-count").textContent = "0 courses";
       return;
     }
- 
+
+    // Fetch all deadlines once, then count per course code
+    const deadlinesSnap = await getDocs(collection(db, "users", currentUser.uid, "deadlines"));
+    const assignmentCount = {};
+    const examCount       = {};
+    deadlinesSnap.forEach((d) => {
+      const dl   = d.data();
+      const code = dl.courseCode;
+      if (dl.type === "exam") {
+        examCount[code] = (examCount[code] || 0) + 1;
+      } else if (dl.type === "assignment") {
+        assignmentCount[code] = (assignmentCount[code] || 0) + 1;
+      }
+    });
+
     // Update badge count
     document.getElementById("course-count").textContent = `${snapshot.size} course${snapshot.size !== 1 ? "s" : ""}`;
- 
+
     // Build table rows dynamically
     tbody.innerHTML = "";
     snapshot.forEach((docSnap) => {
       const c   = docSnap.data();  // The course object
       const id  = docSnap.id;      // Firestore document ID, needed for edit & delete
- 
+
       // Pick badge colour based on the course code
       const badgeClasses = ["badge-lavender", "badge-mint", "badge-yellow", "badge-neutral"];
       const badgeClass   = badgeClasses[id.charCodeAt(0) % badgeClasses.length];
- 
+
       // Study days joined with a separator for display
-      const daysDisplay  = c.studyDays && c.studyDays.length > 0
+      const daysDisplay = c.studyDays && c.studyDays.length > 0
         ? c.studyDays.join(", ")
         : "—";
- 
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td><span class="status-badge ${badgeClass}">${c.code}</span></td>
         <td>${c.name}</td>
         <td style="font-size:11px;">${daysDisplay}</td>
-        <td>${c.assignments ?? 0}</td>
-        <td>${c.exams ?? 0}</td>
+        <td>${assignmentCount[c.code] || 0}</td>
+        <td>${examCount[c.code] || 0}</td>
         <td>
           <div class="table-actions">
             <a href="courses-edit.html?id=${id}" class="button button-secondary button-small">Edit</a>
@@ -247,7 +261,7 @@
       `;
       tbody.appendChild(tr);
     });
- 
+
     // Attach delete listeners after rows are in the DOM
     tbody.querySelectorAll("button[data-id]").forEach((btn) => {
       btn.addEventListener("click", () => deleteCourse(btn.dataset.id));
