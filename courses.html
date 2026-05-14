@@ -73,7 +73,7 @@
             <!-- Rows are injected here by renderCourses() -->
             <tbody id="courses-tbody">
               <tr>
-                <td colspan="6" style="text-align:center; color: var(--text-secondary); padding: 20px;">
+                <td colspan="6" class="td-empty">
                   Loading courses…
                 </td>
               </tr>
@@ -133,21 +133,12 @@
 </div>
  
 <!-- ── Custom confirm modal ──────────────────────────────────────
-     Positioned outside .layout so it overlays the entire page.
-     Placed BEFORE the script tag so the buttons exist in the DOM
-     when the script runs and can attach event listeners to them. -->
-<div id="confirm-overlay" style="
-    display:none; position:fixed; inset:0;
-    background:rgba(0,0,0,0.45); z-index:1000;
-    align-items:center; justify-content:center;">
-  <div style="
-      background:#fff; border:1.5px solid var(--border-color);
-      border-radius:14px; box-shadow:4px 4px 0 var(--text-dark);
-      padding:28px 32px; max-width:380px; width:90%;
-      font-family:'Poppins',sans-serif;">
-    <h4 id="modal-title"   style="font-size:14px; font-weight:700; margin-bottom:8px;"></h4>
-    <p  id="modal-message" style="font-size:13px; color:var(--text-secondary); margin-bottom:22px; line-height:1.6;"></p>
-    <div style="display:flex; gap:10px; justify-content:flex-end;">
+     Positioned outside .layout so it overlays the entire page. -->
+<div id="confirm-overlay" class="modal-overlay">
+  <div class="modal-card">
+    <h4 id="modal-title"   class="modal-title"></h4>
+    <p  id="modal-message" class="modal-message"></p>
+    <div class="modal-actions">
       <button id="confirm-cancel" class="button button-secondary">Cancel</button>
       <button id="confirm-ok"     class="button button-danger">Delete</button>
     </div>
@@ -201,14 +192,14 @@
   // Every add/delete operation calls this function again to refresh the view.
   async function loadCourses() {
     const tbody = document.getElementById("courses-tbody");
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:20px;">Loading…</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="td-empty">Loading…</td></tr>`;
 
     // Path: /users/{uid}/courses
     const snapshot = await getDocs(collection(db, "users", currentUser.uid, "courses"));
 
     // The student has no courses yet
     if (snapshot.empty) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:20px;">No courses yet. Add one below!</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" class="td-empty">No courses yet. Add one below!</td></tr>`;
       document.getElementById("course-count").textContent = "0 courses";
       return;
     }
@@ -249,7 +240,7 @@
       tr.innerHTML = `
         <td><span class="status-badge ${badgeClass}">${c.code}</span></td>
         <td>${c.name}</td>
-        <td style="font-size:11px;">${daysDisplay}</td>
+        <td class="td-days">${daysDisplay}</td>
         <td>${assignmentCount[c.code] || 0}</td>
         <td>${examCount[c.code] || 0}</td>
         <td>
