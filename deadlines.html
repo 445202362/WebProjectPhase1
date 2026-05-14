@@ -195,7 +195,6 @@
   });
  
   // ── Populate the course <select> from Firestore ───────────────
-  // Accepts an optional selectedCode so we can pre-select a value
   async function loadCourseOptions(selectedCode = "") {
     const select   = document.getElementById("dl-course");
     const snapshot = await getDocs(collection(db, "users", currentUser.uid, "courses"));
@@ -355,7 +354,7 @@
     document.getElementById("cancel-edit-btn").classList.remove("hidden");
     document.getElementById("save-btn").textContent   = "Save Changes";
 
-    // Reload the course options and pre-select the saved courseCode in one call.
+    // Reload the course options and pre-select the saved courseCode.
     await loadCourseOptions(d.courseCode || "");
 
     // Pre-fill remaining fields
