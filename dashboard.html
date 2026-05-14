@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Smart Study Planner</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <img src="Logo.png" alt="Brain Route Logo">
+      </div>
+      <div class="logo-text">
+        Brain Route
+        <small>Planner</small>
+      </div>
+    </div>
+    <a class="nav-item active" href="dashboard.html">Dashboard</a>
+    <a class="nav-item" href="courses.html">Courses</a>
+    <a class="nav-item" href="deadlines.html">Deadlines</a>
+    <a class="nav-item" href="study-plan.html">Study Plan</a>
+    <a class="nav-item" href="progress.html">Progress</a>
+    <a class="nav-item" href="reminders.html">Reminders</a>
+    <a class="nav-item" href="chatbot.html">Chat With AI</a>
+    
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-student-initial">S</div>
+      <div class="user-details">
+        <div class="user-name" id="sidebar-student-name">Student</div>
+        <div class="user-status">Logged in</div>
+      </div>
+    </div>
+<a class="nav-item logout" href="index.html">Log Out</a>
+  </div>
+
+  <!-- the dashboard area -->
+  <div class="main-area">
+    <div class="page-header">
+      <h2>Dashboard</h2>
+      <div class="header-actions">
+        <div class="user-avatar-header">S</div>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <!-- Stats cards -->
+      <div class="stats-grid stats-grid-3">
+        <div class="stat-card bg-yellow">
+          <div class="stat-number">12.5</div>
+          <div class="stat-label">Hours This Week</div>
+        </div>
+        <div class="stat-card bg-green">
+          <div class="stat-number">85%</div>
+          <div class="stat-label">Completion Rate</div>
+        </div>
+        <div class="stat-card bg-soft-red">
+          <div class="stat-number">3</div>
+          <div class="stat-label">Upcoming Deadlines</div>
+        </div>
+      </div>
+
+      <!-- Today's Sessions -->
+      <div class="widget">
+        <div class="widget-header">
+          <h3>Today's Sessions</h3>
+          <span class="status-badge badge-neutral">Monday</span>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Course</th><th>Time</th><th>Duration</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>CS101</strong></td><td>9:00 AM</td><td>1.5 hrs</td><td><span class="status-badge badge-success">Done</span></td></tr>
+              <tr><td><strong>MATH203</strong></td><td>2:00 PM</td><td>2 hrs</td><td><span class="status-badge badge-warning">Pending</span></td></tr>
+              <tr><td><strong>ENG305</strong></td><td>5:00 PM</td><td>1 hr</td><td><span class="status-badge badge-neutral">Upcoming</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Upcoming Deadlines -->
+      <div class="widget">
+        <div class="widget-header">
+          <h3>Upcoming Deadlines</h3>
+          <span class="status-badge badge-danger">3 due soon</span>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Course</th><th>Title</th><th>Due Date</th><th>Type</th><th>Priority</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>CS101</strong></td>
+                <td>Project Phase 1</td>
+                <td>Apr 2</td>
+                <td><span class="status-badge badge-neutral">Assignment</span></td>
+                <td><span class="status-badge badge-danger">High</span></td>
+              </tr>
+              <tr>
+                <td><strong>MATH203</strong></td>
+                <td>Midterm Exam</td>
+                <td>Apr 4</td>
+                <td><span class="status-badge badge-warning">Exam</span></td>
+                <td><span class="status-badge badge-warning">Pending</span></td>
+              </tr>
+              <tr>
+                <td><strong>ENG305</strong></td>
+                <td>Essay Draft</td>
+                <td>Apr 7</td>
+                <td><span class="status-badge badge-neutral">Assignment</span></td>
+                <td><span class="status-badge badge-success">On Track</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Weekly Study Plan Preview -->
+      <div class="widget">
+        <div class="widget-header">
+          <h3>This Week's Study Plan</h3>
+          <span class="text-muted fs-11 fw-600">12 hrs total</span>
+        </div>
+        <div class="weekly-grid">
+          <div class="weekday-column"><h4>Sun</h4><div class="study-slot slot-green">CS101<br>8–9:30</div><div class="study-slot slot-pink">ENG<br>2–3</div></div>
+          <div class="weekday-column"><h4>Mon</h4><div class="study-slot slot-yellow">MATH<br>12–2</div></div>
+          <div class="weekday-column"><h4>Tue</h4><div class="study-slot slot-green">CS101<br>8–10</div><div class="study-slot slot-pink">ENG<br>2–3</div></div>
+          <div class="weekday-column"><h4>Wed</h4><div class="study-slot slot-yellow">MATH<br>8–10</div><div class="study-slot slot-lavender">CS101<br>10–12</div></div>
+          <div class="weekday-column"><h4>Thu</h4><div class="study-slot slot-mint">ENG<br>10–11</div><div class="study-slot slot-green">MATH<br>12–2</div></div>
+          <div class="weekday-column"><h4>Fri</h4><div class="study-slot slot-lavender">CS101<br>8–9</div></div>
+          <div class="weekday-column"><h4>Sat</h4><div class="study-slot slot-yellow">Review<br>10–12</div></div>
+        </div>
+        <hr>
+        <p class="text-muted fs-12">Missed sessions are automatically moved to the next available slot.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script type="module" src="firebase-config.js"></script>
+</body>
+</html>

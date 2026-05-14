@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deadlines — BrainRoute</title>
+ 
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+ 
+<div class="layout">
+ 
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <img src="Logo.png" alt="Brain Route Logo">
+      </div>
+      <div class="logo-text">
+        Brain Route
+        <small>Planner</small>
+      </div>
+    </div>
+ <a class="nav-item" href="dashboard.html">Dashboard</a>
+    <a class="nav-item" href="courses.html">Courses</a>
+    <a class="nav-item active" href="deadlines.html">Deadlines</a>
+    <a class="nav-item" href="study-plan.html">Study Plan</a>
+    <a class="nav-item" href="progress.html">Progress</a>
+    <a class="nav-item" href="reminders.html">Reminders</a>
+    <a class="nav-item " href="chatbot.html">Chat With AI</a>
+  
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-student-initial">S</div>
+      <div class="user-details">
+        <div class="user-name" id="sidebar-student-name">Student</div>
+        <div class="user-status">Logged in</div>
+      </div>
+    </div>
+ 
+<a class="nav-item logout" href="index.html">Log Out</a>
+  </div>
+ 
+  <!-- Main Area -->
+  <div class="main-area">
+    <div class="page-header">
+      <h2>Manage Deadlines</h2>
+      <div class="header-actions">
+        <div class="user-avatar-header">S</div>
+      </div>
+    </div>
+ 
+    <div class="page-content">
+ 
+      <!-- Upcoming Deadlines Table -->
+      <div class="widget">
+        <div class="widget-header">
+          <h3>Upcoming Deadlines</h3>
+          <button class="button button-primary button-small">+ Add Deadline</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Course</th>
+                <th>Title</th>
+                <th>Due Date</th>
+                <th>Type</th>
+                <th>Priority</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>CS101</strong></td>
+                <td>Project Phase 1</td>
+                <td>Nov 16</td>
+                <td><span class="status-badge badge-neutral">Assignment</span></td>
+                <td><span class="status-badge badge-danger">High</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="button button-secondary button-small">Edit</button>
+                    <button class="button button-danger button-small">Delete</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>MATH203</strong></td>
+                <td>Midterm Exam</td>
+                <td>Nov 18</td>
+                <td><span class="status-badge badge-warning">Exam</span></td>
+                <td><span class="status-badge badge-danger">High</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="button button-secondary button-small">Edit</button>
+                    <button class="button button-danger button-small">Delete</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>ENG305</strong></td>
+                <td>Essay Draft</td>
+                <td>Nov 21</td>
+                <td><span class="status-badge badge-neutral">Assignment</span></td>
+                <td><span class="status-badge badge-neutral">Medium</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="button button-secondary button-small">Edit</button>
+                    <button class="button button-danger button-small">Delete</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+ 
+      <!-- Add Deadline Form -->
+      <div class="widget">
+        <div class="widget-header">
+          <h3>Add Deadline</h3>
+        </div>
+ 
+        <form method="post" action="#">
+ 
+          <div class="form-row">
+            <div class="form-field">
+              <label for="course">Course</label>
+              <select id="course" name="course">
+                <option value="">Select...</option>
+                <option value="CS101">CS101</option>
+                <option value="MATH203">MATH203</option>
+                <option value="ENG305">ENG305</option>
+              </select>
+            </div>
+            <div class="form-field form-field-wide">
+              <label for="title">Title</label>
+              <input type="text"
+                     id="title"
+                     name="title"
+                     placeholder="e.g. Project Phase 1"
+                     maxlength="100"
+                     required>
+            </div>
+          </div>
+ 
+          <div class="form-row">
+            <div class="form-field">
+              <label for="due-date">Due Date</label>
+              <input type="date"
+                     id="due-date"
+                     name="due-date"
+                     required>
+            </div>
+            <div class="form-field">
+              <label for="type">Type</label>
+              <select id="type" name="type">
+                <option value="assignment">Assignment</option>
+                <option value="exam">Exam</option>
+                <option value="quiz">Quiz</option>
+                <option value="project">Project</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="time">Time</label>
+              <input type="time"
+                     id="time"
+                     name="time"
+                     value="23:59">
+            </div>
+          </div>
+ 
+          <input type="submit"
+                 class="button button-primary button-small"
+                 value="Save Deadline">
+ 
+        </form>
+      </div>
+ 
+    </div><!-- page-content -->
+  </div><!-- main-area -->
+ 
+</div><!-- layout -->
+ <script type="module" src="firebase-config.js"></script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html> 
+
+<html lang="en"> 
+
+ 
+
+<head> 
+
+    <meta charset="UTF-8"> 
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+
+    <title>Create Account - BrainRoute</title> 
+
+ 
+
+    <!-- Fonts --> 
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"> 
+
+ 
+
+    <!-- Styles --> 
+
+    <link rel="stylesheet" href="style.css"> 
+
+
+</head> 
+
+ 
+
+<body> 
+
+ 
+
+<div class="auth-layout"> 
+
+ 
+
+    <!-- Left Side --> 
+
+    <div class="auth-left"> 
+
+ 
+
+        <div class="auth-brand"> 
+
+            <img src="Logo.png" alt="Brain Route Logo"> 
+
+            <span class="auth-brand-name">Brain Route</span> 
+
+        </div> 
+
+ 
+
+        <h2 class="auth-title">Join<br>Brain Route</h2> 
+
+        <p class="auth-desc">Create your free account and start organizing your studies today.</p> 
+
+ 
+
+        <ul class="auth-features"> 
+
+            <li class="auth-feature"> 
+
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"> 
+
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/> 
+
+                </svg> 
+
+                Free for all students 
+
+            </li> 
+
+            <li class="auth-feature"> 
+
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"> 
+
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/> 
+
+                </svg> 
+
+                Works on any device 
+
+            </li> 
+
+            <li class="auth-feature"> 
+
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"> 
+
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/> 
+
+                </svg> 
+
+                Secure and private 
+
+            </li> 
+
+        </ul> 
+
+ 
+
+    </div> 
+
+ 
+
+    <!-- Right Side --> 
+
+    <div class="auth-right"> 
+
+ 
+
+        <h3 class="auth-form-title">Create Account</h3> 
+
+        <p class="auth-form-sub">Fill in your details to get started</p> 
+
+ 
+
+        <!-- Register Form (FR1.1, FR1.2) --> 
+
+        <form class="auth-form" method="post" action="#"> 
+
+ 
+
+            <!-- first name + last name --> 
+
+            <div class="form-row"> 
+
+                <div class="form-group"> 
+
+                    <label for="firstname">First Name</label> 
+
+                    <div class="input-with-icon"> 
+
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> 
+
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/> 
+
+                            <circle cx="12" cy="7" r="4"/> 
+
+                        </svg> 
+
+                        <input type="text" id="firstname" name="firstname" placeholder="Sara" maxlength="50" required> 
+
+                    </div> 
+
+                </div> 
+
+                <div class="form-group"> 
+
+                    <label for="lastname">Last Name</label> 
+
+                    <input type="text" id="lastname" name="lastname" placeholder="Al-Ahmed" maxlength="50" required> 
+
+                </div> 
+
+            </div> 
+
+ 
+
+            <!-- email --> 
+
+            <div class="form-group"> 
+
+                <label for="email">University Email</label> 
+
+                <div class="input-with-icon"> 
+
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> 
+
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/> 
+
+                        <polyline points="22,6 12,13 2,6"/> 
+
+                    </svg> 
+
+                    <input type="email" id="email" name="email" placeholder="student@university.edu" maxlength="100" required> 
+
+                </div> 
+
+            </div> 
+
+ 
+
+            <!-- password + confirm --> 
+
+            <div class="form-row"> 
+
+                <div class="form-group"> 
+
+                    <label for="password">Password</label> 
+
+                    <div class="input-with-icon"> 
+
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> 
+
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/> 
+
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/> 
+
+                        </svg> 
+
+                        <input type="password" id="password" name="password" placeholder="••••••••" maxlength="50" required> 
+
+                    </div> 
+
+                </div> 
+
+                <div class="form-group"> 
+
+                    <label for="confirm">Confirm</label> 
+
+                    <div class="input-with-icon"> 
+
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> 
+
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/> 
+
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/> 
+
+                        </svg> 
+
+                        <input type="password" id="confirm" name="confirm" placeholder="••••••••" maxlength="50" required> 
+
+                    </div> 
+
+                </div> 
+
+            </div> 
+
+ 
+
+            <input type="submit" class="button button-primary button-block" value="Create Account"> 
+
+            <input type="reset" class="button button-secondary button-block" value="Clear"> 
+
+ 
+
+        </form> 
+
+ 
+
+        <p class="auth-switch">Already have an account? <a href="index.html">Sign in →</a></p> 
+
+ 
+
+    </div> 
+
+ 
+
+</div> 
+
+ <script type="module" src="firebase-config.js"></script>
+
+</body> 
+
+</html> 
