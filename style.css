@@ -1162,3 +1162,81 @@ input:focus, select:focus, textarea:focus {
 .reset-msg-success { color: green; }
 .reset-msg-error   { color: red;   }
 .error-msg         { color: red;   }
+ 
+/* ============================================================
+   21. COURSES & DEADLINES PAGES
+   ============================================================ */
+ 
+/* Empty/loading state table cell */
+.td-empty {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 20px;
+}
+ 
+/* Study days cell in courses table */
+.td-days {
+  font-size: 11px;
+}
+ 
+/* Modal overlay */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+ 
+/* Modal card */
+.modal-card {
+  background: var(--background-white);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: 14px;
+  box-shadow: 4px 4px 0 var(--text-dark);
+  padding: 28px 32px;
+  max-width: 380px;
+  width: 90%;
+}
+ 
+/* Modal title */
+.modal-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+ 
+/* Modal message */
+.modal-message {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 22px;
+  line-height: 1.6;
+}
+ 
+/* Modal buttons row */
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+ 
+/* Error banner (deadlines form) */
+.form-error-banner {
+  display: none;
+  background: var(--pastel-red);
+  border: 1.5px solid var(--status-danger);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--status-danger);
+}
+ 
+/* Cancel edit button — hidden by default, shown in JS */
+.hidden {
+  display: none;
+}
