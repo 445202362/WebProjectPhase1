@@ -1122,3 +1122,43 @@ input:focus, select:focus, textarea:focus {
   font-weight: 500;
   line-height: 1.6;
 }
+
+/* Reset section - hidden by default */
+.reset-section {
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.4s ease;
+}
+
+.reset-section.collapsed {
+    max-height: 0;
+    opacity: 0;
+}
+
+.reset-section.expanded {
+    max-height: 200px;
+    opacity: 1;
+}
+
+.reset-inner {
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.reset-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+/* Messages */
+.error-msg,
+.reset-msg {
+    font-size: 0.85rem;
+    min-height: 18px;
+}
+
+.reset-msg-success { color: green; }
+.reset-msg-error   { color: red;   }
+.error-msg         { color: red;   }
