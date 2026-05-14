@@ -72,7 +72,7 @@
             <!-- Populated dynamically by renderDeadlines() -->
             <tbody id="deadlines-tbody">
               <tr>
-                <td colspan="7" style="text-align:center; color:var(--text-secondary); padding:20px;">
+                <td colspan="7" class="td-empty">
                   Loading deadlines…
                 </td>
               </tr>
@@ -87,16 +87,10 @@
         <div class="widget-header">
           <h3 id="form-title">Add Deadline</h3>
           <!-- Cancel edit button, hidden unless we're in edit mode -->
-          <button class="button button-secondary button-small" id="cancel-edit-btn"
-                  style="display:none;">Cancel Edit</button>
+          <button class="button button-secondary button-small hidden" id="cancel-edit-btn">Cancel Edit</button>
         </div>
  
-        <!-- Error banner — hidden by default, shown when validation fails -->
-        <div id="form-error" style="
-            display:none; background:var(--pastel-red); border:1.5px solid var(--status-danger);
-            border-radius:8px; padding:10px 14px; margin-bottom:14px;
-            font-size:13px; font-weight:600; color:var(--status-danger);">
-        </div>
+        <div id="form-error" class="form-error-banner"></div>
  
         <!-- Hidden input holds the ID of the deadline being edited (empty = add mode) -->
         <input type="hidden" id="editing-id" value="">
@@ -146,18 +140,11 @@
 </div>
 
 <!-- ── Custom confirm modal ────────────────────────────────────── -->
-<div id="confirm-overlay" style="
-    display:none; position:fixed; inset:0;
-    background:rgba(0,0,0,0.45); z-index:1000;
-    align-items:center; justify-content:center;">
-  <div style="
-      background:#fff; border:1.5px solid var(--border-color);
-      border-radius:14px; box-shadow:4px 4px 0 var(--text-dark);
-      padding:28px 32px; max-width:380px; width:90%;
-      font-family:'Poppins',sans-serif;">
-    <h4 id="modal-title"   style="font-size:14px; font-weight:700; margin-bottom:8px;"></h4>
-    <p  id="modal-message" style="font-size:13px; color:var(--text-secondary); margin-bottom:22px; line-height:1.6;"></p>
-    <div style="display:flex; gap:10px; justify-content:flex-end;">
+<div id="confirm-overlay" class="modal-overlay">
+  <div class="modal-card">
+    <h4 id="modal-title"   class="modal-title"></h4>
+    <p  id="modal-message" class="modal-message"></p>
+    <div class="modal-actions">
       <button id="confirm-cancel" class="button button-secondary">Cancel</button>
       <button id="confirm-ok"     class="button button-danger">Delete</button>
     </div>
@@ -242,14 +229,14 @@
   // ── Load and render deadlines sorted by due date ────────────────
   async function loadDeadlines() {
     const tbody = document.getElementById("deadlines-tbody");
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:20px;">Loading…</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="td-empty">Loading…</td></tr>`;
  
     
     const q        = query(collection(db, "users", currentUser.uid, "deadlines"), orderBy("dueDate", "asc"));
     const snapshot = await getDocs(q);
  
     if (snapshot.empty) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:20px;">No deadlines yet. Add one below!</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="td-empty">No deadlines yet. Add one below!</td></tr>`;
       document.getElementById("deadline-count").textContent = "0 upcoming";
       return;
     }
@@ -312,8 +299,8 @@
   // ── Save (Add or Edit) ─────────────────────────────────────────
   document.getElementById("save-btn").addEventListener("click", async () => {
     const errorEl = document.getElementById("form-error");
-    errorEl.style.display  = "none";
-    errorEl.textContent    = "";
+    errorEl.classList.remove("form-error-banner");
+    errorEl.textContent = "";
 
     const courseCode = document.getElementById("dl-course").value.trim();
     const title      = document.getElementById("dl-title").value.trim();
@@ -324,12 +311,12 @@
 
     // Validation: show the banner if anything is missing
     if (!courseCode || !title || !dueDate) {
-      errorEl.textContent   = !courseCode
+      errorEl.textContent = !courseCode
         ? "Please select a course."
         : !title
           ? "Please enter a title."
           : "Please pick a due date.";
-      errorEl.style.display = "block";
+      errorEl.classList.add("form-error-banner");
       return;
     }
 
@@ -349,8 +336,8 @@
       await loadDeadlines();
 
     } catch (err) {
-      errorEl.textContent   = "Failed to save deadline. Please try again.";
-      errorEl.style.display = "block";
+      errorEl.textContent = "Failed to save deadline. Please try again.";
+      errorEl.classList.add("form-error-banner");
       console.error(err);
     }
   });
@@ -363,10 +350,10 @@
     const d = snap.data();
 
     // Switch the form to "edit" mode
-    document.getElementById("editing-id").value              = deadlineId;
-    document.getElementById("form-title").textContent        = "Edit Deadline";
-    document.getElementById("cancel-edit-btn").style.display = "inline-flex";
-    document.getElementById("save-btn").textContent          = "Save Changes";
+    document.getElementById("editing-id").value       = deadlineId;
+    document.getElementById("form-title").textContent = "Edit Deadline";
+    document.getElementById("cancel-edit-btn").classList.remove("hidden");
+    document.getElementById("save-btn").textContent   = "Save Changes";
 
     // Reload the course options and pre-select the saved courseCode in one call.
     await loadCourseOptions(d.courseCode || "");
@@ -379,8 +366,8 @@
 
     // Hide any leftover error banner
     const errorEl = document.getElementById("form-error");
-    errorEl.style.display = "none";
-    errorEl.textContent   = "";
+    errorEl.classList.remove("form-error-banner");
+    errorEl.textContent = "";
 
     document.getElementById("form-title").scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -425,17 +412,18 @@
  
   // ── Clear form back to "Add" state ────────────────────────────
   function clearForm() {
-    document.getElementById("editing-id").value              = "";
-    document.getElementById("form-title").textContent        = "Add Deadline";
-    document.getElementById("cancel-edit-btn").style.display = "none";
-    document.getElementById("save-btn").textContent          = "Save Deadline";
-    document.getElementById("dl-course").value               = "";
-    document.getElementById("dl-title").value                = "";
-    document.getElementById("dl-date").value                 = "";
-    document.getElementById("dl-time").value                 = "23:59";
-    document.getElementById("dl-type").value                 = "assignment";
-    document.getElementById("form-error").textContent   = "";
-    document.getElementById("form-error").style.display = "none";
+    document.getElementById("editing-id").value       = "";
+    document.getElementById("form-title").textContent = "Add Deadline";
+    document.getElementById("cancel-edit-btn").classList.add("hidden");
+    document.getElementById("save-btn").textContent   = "Save Deadline";
+    document.getElementById("dl-course").value        = "";
+    document.getElementById("dl-title").value         = "";
+    document.getElementById("dl-date").value          = "";
+    document.getElementById("dl-time").value          = "23:59";
+    document.getElementById("dl-type").value          = "assignment";
+    const errorEl = document.getElementById("form-error");
+    errorEl.textContent = "";
+    errorEl.classList.remove("form-error-banner");
   }
  
   document.getElementById("clear-btn").addEventListener("click", clearForm);
