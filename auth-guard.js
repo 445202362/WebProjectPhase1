@@ -1,25 +1,26 @@
 import { auth } from "./firebase-config.js";
 import {
-    onAuthStateChanged
+    onAuthStateChanged,
+    signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // ── Page Guard ────────────────────────────────────────────────
-// This file is imported by EVERY page except index.html and CreateAcc.html
-// If the user is NOT logged in → redirect to login page
-
+// If user is NOT logged in → send them to index.html
 onAuthStateChanged(auth, (user) => {
     if (!user) {
         window.location.href = "index.html";
     }
 });
 
-// ── Logout function ───────────────────────────────────────────
-// All pages share the same sidebar with a logout link
-// The logout link should call: logOut()
-
-import { signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
+// ── Logout ────────────────────────────────────────────────────
+// Waits for Firebase to fully sign out FIRST, then redirects
+// This prevents the bug where logout immediately logs you back in
 window.logOut = async function () {
-    await signOut(auth);
-    window.location.href = "index.html";
+    try {
+        await signOut(auth);
+        // Only redirect AFTER Firebase confirms sign out is complete
+        window.location.href = "index.html";
+    } catch (error) {
+        console.error("Logout failed:", error);
+    }
 };
