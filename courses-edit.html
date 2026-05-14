@@ -8,10 +8,10 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
+ 
 <div class="layout">
-
-  <!-- Sidebar (exactly as in your other pages) -->
+ 
+  <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-logo">
       <div class="logo-icon"><img src="Logo.png" alt="Brain Route Logo"></div>
@@ -25,69 +25,189 @@
     <a class="nav-item" href="reminders.html">Reminders</a>
     <a class="nav-item" href="chatbot.html">Chat With AI</a>
     <div class="sidebar-user">
-      <div class="user-avatar">S</div>
+      <div class="user-avatar" id="sidebar-initial">S</div>
       <div class="user-details">
-        <div class="user-name">Student</div>
+        <div class="user-name" id="sidebar-name">Student</div>
         <div class="user-status">Logged in</div>
       </div>
     </div>
-    <a class="nav-item logout" href="index.html">Log Out</a>
+    <a class="nav-item logout" id="logout-btn" href="#">Log Out</a>
   </div>
-
+ 
   <!-- Main Area -->
   <div class="main-area">
     <div class="page-header">
       <h2>Edit Course</h2>
-      <div class="user-avatar-header">S</div>
+      <div class="user-avatar-header" id="header-initial">S</div>
     </div>
-
+ 
     <div class="page-content">
       <div class="widget">
         <div class="widget-header">
           <h3>Edit Course Details</h3>
-          <span class="status-badge badge-lavender">CS101</span>
+          <!-- Badge updates to show the current course code once loaded -->
+          <span class="status-badge badge-lavender" id="code-badge">Loading…</span>
         </div>
-
-        <!-- Form fields using your existing classes -->
+ 
+        <!-- Error / feedback message -->
+        <p id="edit-error" class="error-msg"></p>
+ 
         <div class="form-row">
           <div class="form-field">
             <label for="course-code">COURSE CODE</label>
-            <input type="text" id="course-code" name="course-code" value="CS101">
+            <input type="text" id="course-code" maxlength="20">
           </div>
           <div class="form-field">
             <label for="course-name">COURSE NAME</label>
-            <input type="text" id="course-name" name="course-name" value="Introduction to JAVA">
+            <input type="text" id="course-name" maxlength="100">
           </div>
         </div>
-
+ 
         <div class="form-group">
           <label>STUDY DAYS</label>
           <div class="days-grid">
             <input type="checkbox" id="day-sun" class="day-toggle" hidden>
             <label for="day-sun" class="day-pill">Sun</label>
-
-            <input type="checkbox" id="day-mon" class="day-toggle" checked hidden>
+ 
+            <input type="checkbox" id="day-mon" class="day-toggle" hidden>
             <label for="day-mon" class="day-pill">Mon</label>
-
+ 
             <input type="checkbox" id="day-tue" class="day-toggle" hidden>
             <label for="day-tue" class="day-pill">Tue</label>
-
-            <input type="checkbox" id="day-wed" class="day-toggle" checked hidden>
+ 
+            <input type="checkbox" id="day-wed" class="day-toggle" hidden>
             <label for="day-wed" class="day-pill">Wed</label>
-
+ 
             <input type="checkbox" id="day-thu" class="day-toggle" hidden>
             <label for="day-thu" class="day-pill">Thu</label>
           </div>
         </div>
-
+ 
         <div class="form-actions">
-          <a href="courses.html" class="button button-warning">Save Changes</a>
+          <button class="button button-warning" id="save-btn">Save Changes</button>
           <a href="courses.html" class="button button-secondary">Cancel</a>
         </div>
       </div>
     </div>
   </div>
 </div>
-<script type="module" src="firebase-config.js"></script>
+ 
+<script type="module">
+  import { auth, db } from "./firebase-config.js";
+  import {
+    onAuthStateChanged, signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    doc, getDoc, updateDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+ 
+  let currentUser = null;
+ 
+  // ── Read the course ID from the URL ──────────────────────────
+  const courseId = new URLSearchParams(window.location.search).get("id");
+ 
+  // If no ID in URL, go back
+  if (!courseId) {
+    window.location.href = "courses.html";
+  }
+ 
+  // ── Auth guard and load course ──────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "index.html";
+      return;
+    }
+    currentUser = user;
+ 
+    // Show user's initial
+    try {
+      const profileSnap = await getDoc(doc(db, "users", user.uid, "profile", "info"));
+      if (profileSnap.exists()) {
+        const { firstName } = profileSnap.data();
+        const initial = firstName ? firstName[0].toUpperCase() : "S";
+        document.getElementById("sidebar-initial").textContent = initial;
+        document.getElementById("header-initial").textContent  = initial;
+        document.getElementById("sidebar-name").textContent    = firstName || "Student";
+      }
+    } catch (e) { /* keep default */ }
+ 
+    // Load the specific course document to pre-fill the form
+    await loadCourse();
+  });
+ 
+  // ── Logout ────────────────────────────────────────────────────
+  document.getElementById("logout-btn").addEventListener("click", async (e) => {
+    e.preventDefault();
+    await signOut(auth);
+    window.location.href = "index.html";
+  });
+ 
+  // ── Load course data and pre-fill form ────────────────────────
+  async function loadCourse() {
+    const errorEl = document.getElementById("edit-error");
+ 
+    try {
+      // Fetch the specific course document by its ID
+      const snap = await getDoc(doc(db, "users", currentUser.uid, "courses", courseId));
+ 
+      if (!snap.exists()) {
+        // Document doesn't exist
+        errorEl.textContent = "Course not found. Redirecting…";
+        setTimeout(() => { window.location.href = "courses.html"; }, 1500);
+        return;
+      }
+ 
+      const c = snap.data();
+ 
+      // Pre-fill the form fields with existing values
+      document.getElementById("course-code").value = c.code || "";
+      document.getElementById("course-name").value = c.name || "";
+      document.getElementById("code-badge").textContent = c.code || "—";
+ 
+      // Pre-check the study day pills that were saved
+      const savedDays = c.studyDays || [];
+      ["Sun","Mon","Tue","Wed","Thu"].forEach((day) => {
+        document.getElementById(`day-${day.toLowerCase()}`).checked = savedDays.includes(day);
+      });
+ 
+    } catch (err) {
+      errorEl.textContent = "Failed to load course. Please go back and try again.";
+      console.error(err);
+    }
+  }
+ 
+  // ── Save Changes ──────────────────────────────────────────────
+  document.getElementById("save-btn").addEventListener("click", async () => {
+    const errorEl = document.getElementById("edit-error");
+    errorEl.textContent = "";
+ 
+    const code = document.getElementById("course-code").value.trim().toUpperCase();
+    const name = document.getElementById("course-name").value.trim();
+    const days = ["Sun","Mon","Tue","Wed","Thu"].filter((day) =>
+      document.getElementById(`day-${day.toLowerCase()}`).checked
+    );
+ 
+    if (!code || !name) {
+      errorEl.textContent = "Course code and name cannot be empty.";
+      return;
+    }
+ 
+    try {
+      await updateDoc(doc(db, "users", currentUser.uid, "courses", courseId), {
+        code:      code,
+        name:      name,
+        studyDays: days
+      });
+ 
+      // Go back to the courses list
+      window.location.href = "courses.html";
+ 
+    } catch (err) {
+      errorEl.textContent = "Failed to save changes. Please try again.";
+      console.error(err);
+    }
+  });
+</script>
+ 
 </body>
 </html>
