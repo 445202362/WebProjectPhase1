@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>AI Chatbot -Smart Study Planner</title>
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-      <link rel="stylesheet" href="style.css">
-    </head>
-    <body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chatbot - Smart Study Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
 
 <div class="layout">
 
@@ -22,7 +23,6 @@
         <small>Planner</small>
       </div>
     </div>
-
     <a class="nav-item" href="dashboard.html">Dashboard</a>
     <a class="nav-item" href="courses.html">Courses</a>
     <a class="nav-item" href="deadlines.html">Deadlines</a>
@@ -30,70 +30,246 @@
     <a class="nav-item" href="progress.html">Progress</a>
     <a class="nav-item" href="reminders.html">Reminders</a>
     <a class="nav-item active" href="chatbot.html">Chat With AI</a>
-
     <div class="sidebar-user">
-      <div class="user-avatar">S</div>
+      <div class="user-avatar" id="sidebar-initial">S</div>
       <div class="user-details">
-        <div class="user-name">Student</div>
+        <div class="user-name" id="sidebar-name">Student</div>
         <div class="user-status">Logged in</div>
       </div>
     </div>
-
-    <a class="nav-item logout" href="index.html">Log Out</a>
+    <a class="nav-item logout" id="logout-btn" href="#">Log Out</a>
   </div>
 
   <!-- Main Area -->
   <div class="main-area">
-
     <div class="page-header">
-      <h2>AI Assistant</h2> 
-      <h1> Gemini </h1>
-
-      <div class="user-avatar-header">S</div>
+      <h2>AI Assistant</h2>
+      <div class="gemini-subtitle">Gemini</div>
+      <div class="user-avatar-header" id="header-initial">S</div>
     </div>
 
-   
-
-       
-   <div class="widget">
+    <div class="page-content">
+      <div class="widget">
         <div class="widget-header">
-            
-          <h3> How Can I Help You Today ?</h3>
-          </div>
-          <div class="chat-messages" id="chatMessages">
-  <!-- Example messages  -->
-  <div class="message bot-message">
-    <div class="message-text">Hello! I'm your AI study assistant. How can I help you today?</div>
-  </div>
-  
-  <div class="message user-message">
-    <div class="message-text">Can you help me plan my study schedule for CS101?</div>
-  </div>
-  
-  <div class="message bot-message">
-    <div class="message-text">Of course! When is your next deadline?</div>
-  </div>
-</div>
- 
-<!--widget-->
-    
-          
-        
-        <div class="form-row">
-          <div class="form-field">
-            
-            <input type="text" id="user-question" name="user-question" placeholder="Ask About Anything">
-          </div>
-          <button class="button button-primary" id="sendBtn" >Send</button>
+          <h3>How Can I Help You Today?</h3>
         </div>
-        
+        <div class="chat-messages" id="chatMessages">
+          <div class="message bot-message">
+            <p>Hello! I'm your <strong>BrainRoute AI study assistant</strong> powered by Gemini.</p>
+            <p>I can help you with:</p>
+            <ul>
+              <li>Planning your weekly study schedule</li>
+              <li>Managing deadlines and priorities</li>
+              <li>Study strategies and time management</li>
+              <li>Questions about your courses</li>
+            </ul>
+            <p>How can I help you today?</p>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="userInput" placeholder="Ask about anything..." autocomplete="off">
+          <button class="button button-primary" id="sendBtn">Send</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
+<script type="module">
+  import { auth, db } from "./firebase-config.js";
+  import { onAuthStateChanged, signOut }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { doc, getDoc }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    </body>
+  // ── Gemini config ─────────────────────────────────────────────
+  const GEMINI_API_KEY = "AIzaSyBH4FdtCNdDVKFLBbu63ih842OE2PXcyyw";
+  const GEMINI_URL     = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
 
+  // ── Conversation history ──────────────────────────────────────
+  const conversationHistory = [
+    {
+      role:  "user",
+      parts: [{ text:
+        "You are a helpful and friendly AI study assistant for BrainRoute, " +
+        "a smart study planner web app used by university students at King Saud University. " +
+        "Help students with: planning study schedules, managing deadlines, " +
+        "understanding course material, time management, and exam preparation. " +
+        "Keep responses concise, practical, and encouraging. " +
+        "Use bullet points and bold text to make your responses easy to read. " 
+      }]
+    },
+    {
+      role:  "model",
+      parts: [{ text: "Understood! I am your BrainRoute study assistant. How can I help you today?" }]
+    }
+  ];
 
+  // ── DOM ───────────────────────────────────────────────────────
+  const chatMessages = document.getElementById("chatMessages");
+  const userInput    = document.getElementById("userInput");
+  const sendBtn      = document.getElementById("sendBtn");
+  const logoutBtn    = document.getElementById("logout-btn");
 
+  // ── Auth guard ────────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = "index.html"; return; }
+    try {
+      const snap = await getDoc(doc(db, "users", user.uid, "profile", "info"));
+      if (snap.exists()) {
+        const { firstName } = snap.data();
+        const initial = firstName ? firstName[0].toUpperCase() : "S";
+        document.getElementById("sidebar-initial").textContent = initial;
+        document.getElementById("header-initial").textContent  = initial;
+        document.getElementById("sidebar-name").textContent    = firstName;
+      }
+    } catch (e) { /* keep default S */ }
+  });
+
+  // ── Logout ────────────────────────────────────────────────────
+  logoutBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    await signOut(auth);
+    window.location.href = "index.html";
+  });
+
+  // ── Simple markdown parser ────────────────────────────────────
+  // Converts Gemini's markdown to safe HTML for display
+  function parseMarkdown(text) {
+    // Escape HTML to prevent XSS first
+    const escaped = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    const lines   = escaped.split("\n");
+    let   html    = "";
+    let   inUl    = false;
+    let   inOl    = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      let line = lines[i];
+
+      // Close lists when line is not a list item
+      const isBullet   = /^[-*]\s+(.+)/.test(line);
+      const isNumbered = /^\d+\.\s+(.+)/.test(line);
+
+      if (!isBullet && inUl)    { html += "</ul>"; inUl = false; }
+      if (!isNumbered && inOl)  { html += "</ol>"; inOl = false; }
+
+      // Apply inline formatting
+      line = line
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")   // **bold**
+        .replace(/\*(.+?)\*/g,     "<em>$1</em>")            // *italic*
+        .replace(/`(.+?)`/g,       "<code>$1</code>")        // `code`
+        .replace(/^#{1,4}\s+(.+)/, "<h4>$1</h4>");           // # heading
+
+      if (isBullet) {
+        if (!inUl) { html += "<ul>"; inUl = true; }
+        html += `<li>${line.replace(/^[-*]\s+/, "")}</li>`;
+      } else if (isNumbered) {
+        if (!inOl) { html += "<ol>"; inOl = true; }
+        html += `<li>${line.replace(/^\d+\.\s+/, "")}</li>`;
+      } else if (line.startsWith("<h4>")) {
+        html += line;
+      } else if (line.trim() === "") {
+        // skip empty lines inside lists, add spacing outside
+        if (!inUl && !inOl) html += "";
+      } else {
+        html += `<p>${line}</p>`;
+      }
+    }
+
+    // Close any open lists
+    if (inUl) html += "</ul>";
+    if (inOl) html += "</ol>";
+
+    return html;
+  }
+
+  // ── Append message bubble ─────────────────────────────────────
+  function appendMessage(text, type) {
+    const div = document.createElement("div");
+    div.classList.add("message", `${type}-message`);
+
+    if (type === "bot") {
+      div.innerHTML = parseMarkdown(text);
+    } else {
+      div.textContent = text;
+    }
+
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  // ── Loading indicator ─────────────────────────────────────────
+  function showLoading() {
+    const div = document.createElement("div");
+    div.classList.add("message", "loading-message");
+    div.innerHTML = `<span class="loading-dots">Gemini is thinking</span>`;
+    div.id = "loadingIndicator";
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function removeLoading() {
+    const el = document.getElementById("loadingIndicator");
+    if (el) el.remove();
+  }
+
+  // ── Call Gemini API ───────────────────────────────────────────
+  async function callGemini(userMessage) {
+    conversationHistory.push({ role: "user", parts: [{ text: userMessage }] });
+
+    const response = await fetch(GEMINI_URL, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ contents: conversationHistory })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("Gemini error response:", errText);
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data     = await response.json();
+    const botReply = data.candidates[0].content.parts[0].text;
+    conversationHistory.push({ role: "model", parts: [{ text: botReply }] });
+    return botReply;
+  }
+
+  // ── Send message ──────────────────────────────────────────────
+  async function sendMessage() {
+    const text = userInput.value.trim();
+    if (!text) return;
+
+    appendMessage(text, "user");
+    userInput.value  = "";
+    sendBtn.disabled = true;
+    showLoading();
+
+    try {
+      const reply = await callGemini(text);
+      removeLoading();
+      appendMessage(reply, "bot");
+    } catch (err) {
+      removeLoading();
+      appendMessage("Sorry, I could not connect to Gemini right now. Please try again.", "error");
+      console.error("Gemini API error:", err);
+    } finally {
+      sendBtn.disabled = false;
+      userInput.focus();
+    }
+  }
+
+  // ── Event listeners ───────────────────────────────────────────
+  sendBtn.addEventListener("click", sendMessage);
+  userInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+</script>
+
+</body>
 </html>

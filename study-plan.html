@@ -89,13 +89,13 @@
           </div>
         </div>
 
-        <div class="reschedule-banner" style="margin-top: 25px; display: flex; align-items: center; gap: 10px; padding: 15px; background: var(--background-outer); border: 1.5px solid var(--border-color); border-radius: 10px;">
+        <div class="reschedule-banner">
            
-           <span style="font-size: 12px; font-weight: 600;"><b>Automatic Rescheduling Active:</b> Based on upcoming deadlines, the system prioritized your Java and Math courses this week.</span>
+           <span class="reschedule-banner-text"><b>Automatic Rescheduling Active:</b> Based on upcoming deadlines, the system prioritized your Java and Math courses this week.</span>
         </div>
       </div>
 
-      <hr style="margin: 30px 0; border: none; border-top: 2px solid var(--border-color); opacity: 0.1;">
+      <hr class="section-divider">
 
       <div class="widget">
         <div class="widget-header">
@@ -120,17 +120,17 @@
             <label>TO</label>
             <input type="time" id="range-to" value="12:00">
           </div>
-          <button class="button button-primary" onclick="addCustomRange()" style="height: 45px;">+ Add Period</button>
+          <button class="button button-primary button-tall" onclick="addCustomRange()">+ Add Period</button>
         </div>
 
-        <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary); letter-spacing: 1px;">ACTIVE PERIODS</label>
+        <label class="label-section">ACTIVE PERIODS</label>
         <div id="ranges-list" class="active-ranges-list">
             <div class="range-tag"><span>Sunday: 08:00 - 14:00</span> <span class="remove-range" onclick="this.parentElement.remove()">×</span></div>
             <div class="range-tag"><span>Monday: 16:00 - 20:00</span> <span class="remove-range" onclick="this.parentElement.remove()">×</span></div>
             <div class="range-tag"><span>Every Day: 19:00 - 21:00</span> <span class="remove-range" onclick="this.parentElement.remove()">×</span></div>
         </div>
 
-        <div class="form-actions" style="margin-top:30px;">
+        <div class="form-actions-spaced">
           <button class="button button-primary">Save & Apply to Plan</button>
         </div>
       </div>
@@ -152,6 +152,6 @@
     list.appendChild(tag);
   }
 </script>
-
+<script type="module" src="firebase-config.js"></script>
 </body>
 </html>
