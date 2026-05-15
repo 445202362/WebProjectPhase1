@@ -65,7 +65,7 @@
         </div>
 
         <div class="reschedule-banner">
-          <span class="reschedule-banner-text"><b>Smart Interaction:</b> Tap a session to cycle: <b>Default</b> → <b>Completed</b> → <b>Missed</b>.</span>
+          <span class="reschedule-banner-text"><b>Task List:</b> View your tasks for the week.</span>
         </div>
       </div>
 
@@ -133,7 +133,6 @@
     if (!user) { window.location.href = "index.html"; return; }
     currentUser = user;
 
-   
     const snap = await getDoc(doc(db, "users", user.uid, "profile", "info"));
     if (snap.exists()) {
       const { firstName } = snap.data();
@@ -147,12 +146,10 @@
     await generateStudyPlan();
   });
 
-
   async function generateStudyPlan() {
     if (!currentUser || currentAvailability.length === 0) return;
 
     try {
-       
         const q = query(collection(db, "users", currentUser.uid, "deadlines"), orderBy("priority", "asc"));
         const deadlineSnap = await getDocs(q);
         const allDeadlines = [];
@@ -163,17 +160,10 @@
         endDate.setDate(startDate.getDate() + 6);
         document.getElementById("current-week-label").textContent = `${formatDate(startDate)} - ${formatDate(endDate)}`;
 
-        let missedQueue = [];
-        allDeadlines.forEach(task => {
-            const states = task.sessionStates || {};
-            Object.values(states).forEach(v => { if(v === "missed") missedQueue.push(task); });
-        });
-
         const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         const grid = document.getElementById('weekly-plan-grid');
         const columns = grid.querySelectorAll(".weekday-column");
 
-        let queueIndex = 0;
         daysOfWeek.forEach((dayName, colIdx) => {
             const currentDayDate = new Date(startDate);
             currentDayDate.setDate(startDate.getDate() + colIdx);
@@ -182,89 +172,35 @@
             const h4 = columns[colIdx].querySelector("h4");
             h4.innerHTML = `${dayName} <br><small>${formatDate(currentDayDate)}</small>`;
             
-        
             const oldSlots = columns[colIdx].querySelectorAll('.study-slot');
             oldSlots.forEach(s => s.remove());
 
             const daySlots = currentAvailability.filter(slot => slot.day === dayName || slot.day === "Every Day");
-            
             daySlots.forEach(slot => {
-                const duration = timeToMinutes(slot.to) - timeToMinutes(slot.from);
-                const numSessions = duration > 100 ? 2 : 1;
-                const minsPerSession = duration / numSessions;
+                // Only show tasks that are not completed
+                const tasksForDay = allDeadlines.filter(t => {
+                    const dueDate = new Date(t.dueDate);
+                    dueDate.setHours(0,0,0,0);
+                    return currentDayDate < dueDate && t.status !== "completed";
+                });
 
-                for (let i = 0; i < numSessions; i++) {
-                    
-                    const activeTasks = allDeadlines.filter(t => {
-                        const dueDate = new Date(t.dueDate);
-                        dueDate.setHours(0,0,0,0);
-                        
-                        return currentDayDate < dueDate;
-                    });
-
-                    let task = null;
-                    
-                    if (missedQueue.length > 0) {
-                        let potentialMissed = missedQueue[0];
-                        if (new Date(potentialMissed.dueDate) > currentDayDate) {
-                            task = missedQueue.shift();
-                        } else {
-                            missedQueue.shift(); 
-                        }
-                    } 
-                    
-                    
-                    if (!task && activeTasks.length > 0) {
-                        task = activeTasks[queueIndex % activeTasks.length];
-                        queueIndex++;
-                    }
-
-                    if (task) {
-                        const sessionStart = minutesToTime(timeToMinutes(slot.from) + (i * minsPerSession));
-                        const sessionEnd = minutesToTime(timeToMinutes(slot.from) + ((i + 1) * minsPerSession));
-                        
-                        const dateStr = currentDayDate.toISOString().split('T')[0];
-                        const sessionKey = `${dateStr}_${sessionStart}_${task.courseCode}`;
-                        const sessionStates = task.sessionStates || {};
-                        const currentStatus = sessionStates[sessionKey] || "default";
-
-                        const sessionDiv = document.createElement("div");
-                        let statusClass = (currentStatus === "completed") ? "is-completed" : (currentStatus === "missed") ? "is-missed" : "";
-
-                        sessionDiv.className = `study-slot slot-${task.priority.toLowerCase()} ${statusClass}`;
-                        sessionDiv.innerHTML = `
-                            <strong>${task.courseCode}</strong>
-                            <span class="slot-time">${sessionStart} - ${sessionEnd}</span>
-                            <div class="status-indicator"></div>
-                        `;
-
-                        sessionDiv.onclick = async function() {
-                            let newStatus = (currentStatus === "default") ? "completed" : (currentStatus === "completed") ? "missed" : "default";
-                            const taskRef = doc(db, "users", currentUser.uid, "deadlines", task.id);
-                            const updatedStates = { ...sessionStates, [sessionKey]: newStatus };
-                            await updateDoc(taskRef, { sessionStates: updatedStates });
-                            generateStudyPlan(); 
-                        };
-                        
-                        columns[colIdx].appendChild(sessionDiv);
-                    }
-                }
+                tasksForDay.forEach(task => {
+                    const sessionDiv = document.createElement("div");
+                    sessionDiv.className = `study-slot slot-${task.priority.toLowerCase()}`;
+                    sessionDiv.innerHTML = `
+                        <strong>${task.courseCode}</strong>
+                        <span class="slot-time">${task.title}</span>
+                    `;
+                    columns[colIdx].appendChild(sessionDiv);
+                });
             });
         });
     } catch (error) { console.error("Scheduling Error:", error); }
   }
 
-  
   document.getElementById("prev-week").onclick = () => { weekOffset--; generateStudyPlan(); };
   document.getElementById("next-week").onclick = () => { weekOffset++; generateStudyPlan(); };
 
-  function timeToMinutes(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
-  function minutesToTime(m) { 
-    const h = Math.floor(m / 60); const min = Math.round(m % 60);
-    return `${h.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
-  }
-
- 
   document.getElementById("add-period-btn").onclick = async () => {
     const day = document.getElementById("custom-day").value;
     const from = document.getElementById("range-from").value;
