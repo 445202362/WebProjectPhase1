@@ -38,9 +38,9 @@
       <div class="header-title-group">
         <h2>Study Plan & Availability</h2>
         <div class="week-nav-controls">
-            <button id="prev-week" class="button button-small">← Prev Week</button>
-            <span id="current-week-label" style="font-weight: 600; margin: 0 15px;"></span>
-            <button id="next-week" class="button button-small">Next Week →</button>
+          <button id="prev-week" class="button button-small">← Prev Week</button>
+          <span id="current-week-label" class="week-label-text"></span>
+          <button id="next-week" class="button button-small">Next Week →</button>
         </div>
       </div>
       <div class="header-actions">
@@ -80,19 +80,27 @@
           <div class="form-field">
             <label>DAY</label>
             <select id="custom-day">
-              <option>Every Day</option><option>Sunday</option><option>Monday</option>
-              <option>Tuesday</option><option>Wednesday</option><option>Thursday</option>
-              <option>Friday</option><option>Saturday</option>
+              <option>Every Day</option>
+              <option>Sunday</option>
+              <option>Monday</option>
+              <option>Tuesday</option>
+              <option>Wednesday</option>
+              <option>Thursday</option>
+              <option>Friday</option>
+              <option>Saturday</option>
             </select>
           </div>
+
           <div class="form-field">
             <label>FROM</label>
             <input type="time" id="range-from" value="08:00">
           </div>
+
           <div class="form-field">
             <label>TO</label>
             <input type="time" id="range-to" value="12:00">
           </div>
+
           <button class="button button-primary button-tall" id="add-period-btn">+ Add Period</button>
         </div>
 
@@ -111,32 +119,61 @@
   import { auth, db } from "./firebase-config.js";
   import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import {
-    collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, getDoc, updateDoc 
+    collection,
+    getDocs,
+    addDoc,
+    deleteDoc,
+    doc,
+    query,
+    orderBy,
+    getDoc,
+    updateDoc
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   let currentUser = null;
   let currentAvailability = [];
-  let weekOffset = 0; 
+  let weekOffset = 0;
+
+  const STATE_CYCLE = ["default", "completed", "missed"];
+
+  const STATE_SLOT_CLASS = {
+    default: "",
+    completed: "is-completed",
+    missed: "is-missed"
+  };
 
   function getStartDateOfWeek(offset) {
-      const d = new Date();
-      const day = d.getDay(); 
-      const diff = d.getDate() - day + (offset * 7);
-      return new Date(d.setDate(diff));
+    const d = new Date();
+    const day = d.getDay();
+    const diff = d.getDate() - day + (offset * 7);
+    return new Date(d.setDate(diff));
   }
 
   function formatDate(date) {
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric"
+    });
+  }
+
+  function normalizeDate(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   }
 
   onAuthStateChanged(auth, async (user) => {
-    if (!user) { window.location.href = "index.html"; return; }
+    if (!user) {
+      window.location.href = "index.html";
+      return;
+    }
+
     currentUser = user;
 
     const snap = await getDoc(doc(db, "users", user.uid, "profile", "info"));
+
     if (snap.exists()) {
       const { firstName } = snap.data();
       const initial = firstName ? firstName[0].toUpperCase() : "N";
+
       document.getElementById("sidebar-initial").textContent = initial;
       document.getElementById("header-initial").textContent = initial;
       document.getElementById("sidebar-name").textContent = firstName || "User";
@@ -146,97 +183,188 @@
     await generateStudyPlan();
   });
 
+  async function toggleSessionState(taskId, sessionKey, currentState) {
+    const currentIndex = STATE_CYCLE.indexOf(currentState);
+    const nextState = STATE_CYCLE[(currentIndex + 1) % STATE_CYCLE.length];
+
+    try {
+      await updateDoc(doc(db, "users", currentUser.uid, "deadlines", taskId), {
+        [`sessionStates.${sessionKey}`]: nextState
+      });
+
+      await generateStudyPlan();
+    } catch (err) {
+      console.error("Failed to update session state:", err);
+    }
+  }
+
   async function generateStudyPlan() {
     if (!currentUser || currentAvailability.length === 0) return;
 
     try {
-        const q = query(collection(db, "users", currentUser.uid, "deadlines"), orderBy("priority", "asc"));
-        const deadlineSnap = await getDocs(q);
-        const allDeadlines = [];
-        deadlineSnap.forEach(d => allDeadlines.push({ id: d.id, ...d.data() }));
+      const q = query(
+        collection(db, "users", currentUser.uid, "deadlines"),
+        orderBy("priority", "asc")
+      );
 
-        const startDate = getStartDateOfWeek(weekOffset);
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 6);
-        document.getElementById("current-week-label").textContent = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+      const deadlineSnap = await getDocs(q);
+      const allDeadlines = [];
 
-        const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        const grid = document.getElementById('weekly-plan-grid');
-        const columns = grid.querySelectorAll(".weekday-column");
-
-        daysOfWeek.forEach((dayName, colIdx) => {
-            const currentDayDate = new Date(startDate);
-            currentDayDate.setDate(startDate.getDate() + colIdx);
-            currentDayDate.setHours(0,0,0,0);
-
-            const h4 = columns[colIdx].querySelector("h4");
-            h4.innerHTML = `${dayName} <br><small>${formatDate(currentDayDate)}</small>`;
-            
-            const oldSlots = columns[colIdx].querySelectorAll('.study-slot');
-            oldSlots.forEach(s => s.remove());
-
-            const daySlots = currentAvailability.filter(slot => slot.day === dayName || slot.day === "Every Day");
-            daySlots.forEach(slot => {
-                // Only show tasks that are not completed
-                const tasksForDay = allDeadlines.filter(t => {
-                    const dueDate = new Date(t.dueDate);
-                    dueDate.setHours(0,0,0,0);
-                    return currentDayDate < dueDate && t.status !== "completed";
-                });
-
-                tasksForDay.forEach(task => {
-                    const sessionDiv = document.createElement("div");
-                    sessionDiv.className = `study-slot slot-${task.priority.toLowerCase()}`;
-                    sessionDiv.innerHTML = `
-                        <strong>${task.courseCode}</strong>
-                        <span class="slot-time">${task.title}</span>
-                    `;
-                    columns[colIdx].appendChild(sessionDiv);
-                });
-            });
+      deadlineSnap.forEach(d => {
+        allDeadlines.push({
+          id: d.id,
+          ...d.data()
         });
-    } catch (error) { console.error("Scheduling Error:", error); }
+      });
+
+      const startDate = getStartDateOfWeek(weekOffset);
+      startDate.setHours(0, 0, 0, 0);
+
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 6);
+
+      document.getElementById("current-week-label").textContent =
+        `${formatDate(startDate)} - ${formatDate(endDate)}`;
+
+      const daysOfWeek = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+      ];
+
+      const grid = document.getElementById("weekly-plan-grid");
+      const columns = grid.querySelectorAll(".weekday-column");
+
+      daysOfWeek.forEach((dayName, colIdx) => {
+        const currentDayDate = new Date(startDate);
+        currentDayDate.setDate(startDate.getDate() + colIdx);
+        currentDayDate.setHours(0, 0, 0, 0);
+
+        const h4 = columns[colIdx].querySelector("h4");
+        h4.innerHTML = `${dayName} <br><small>${formatDate(currentDayDate)}</small>`;
+
+        const oldSlots = columns[colIdx].querySelectorAll(".study-slot");
+        oldSlots.forEach(s => s.remove());
+
+        const daySlots = currentAvailability.filter(slot => {
+          return slot.day === dayName || slot.day === "Every Day";
+        });
+
+        daySlots.forEach(slot => {
+          const tasksForDay = allDeadlines.filter(task => {
+            const dueDate = new Date(task.dueDate);
+            dueDate.setHours(0, 0, 0, 0);
+
+            return currentDayDate < dueDate && task.status !== "completed";
+          });
+
+          tasksForDay.forEach(task => {
+            const dateStr = normalizeDate(currentDayDate);
+            const sessionKey = `${dateStr}_${slot.from}_${task.courseCode}`;
+            const state = task.sessionStates?.[sessionKey] || "default";
+            const stateClass = STATE_SLOT_CLASS[state];
+
+            const sessionDiv = document.createElement("div");
+            sessionDiv.className = `study-slot slot-${task.priority.toLowerCase()} ${stateClass}`.trim();
+
+            sessionDiv.innerHTML = `
+              <strong>${task.courseCode}</strong>
+              <span class="slot-time">${task.title}</span>
+            `;
+
+            sessionDiv.addEventListener("click", () => {
+              toggleSessionState(task.id, sessionKey, state);
+            });
+
+            columns[colIdx].appendChild(sessionDiv);
+          });
+        });
+      });
+    } catch (error) {
+      console.error("Scheduling Error:", error);
+    }
   }
 
-  document.getElementById("prev-week").onclick = () => { weekOffset--; generateStudyPlan(); };
-  document.getElementById("next-week").onclick = () => { weekOffset++; generateStudyPlan(); };
+  document.getElementById("prev-week").onclick = () => {
+    weekOffset--;
+    generateStudyPlan();
+  };
+
+  document.getElementById("next-week").onclick = () => {
+    weekOffset++;
+    generateStudyPlan();
+  };
 
   document.getElementById("add-period-btn").onclick = async () => {
     const day = document.getElementById("custom-day").value;
     const from = document.getElementById("range-from").value;
     const to = document.getElementById("range-to").value;
+
     if (from && to) {
-      await addDoc(collection(db, "users", currentUser.uid, "availability"), { day, from, to });
+      await addDoc(collection(db, "users", currentUser.uid, "availability"), {
+        day,
+        from,
+        to
+      });
+
       await loadAvailability();
       await generateStudyPlan();
     }
   };
 
-  document.getElementById("save-btn").onclick = () => generateStudyPlan();
-  document.getElementById("logout-btn").onclick = async () => { await signOut(auth); window.location.href = "index.html"; };
+  document.getElementById("save-btn").onclick = () => {
+    generateStudyPlan();
+  };
+
+  document.getElementById("logout-btn").onclick = async () => {
+    await signOut(auth);
+    window.location.href = "index.html";
+  };
 
   async function loadAvailability() {
     const q = query(collection(db, "users", currentUser.uid, "availability"));
     const snap = await getDocs(q);
+
     currentAvailability = [];
+
     const list = document.getElementById("ranges-list");
     list.innerHTML = "";
+
     snap.forEach(d => {
       const data = d.data();
-      currentAvailability.push({ id: d.id, ...data });
+
+      currentAvailability.push({
+        id: d.id,
+        ...data
+      });
+
       const tag = document.createElement("div");
       tag.className = "range-tag";
-      tag.innerHTML = `<span>${data.day}: ${data.from} - ${data.to}</span> <span class="remove-range" data-id="${d.id}">×</span>`;
+
+      tag.innerHTML = `
+        <span>${data.day}: ${data.from} - ${data.to}</span>
+        <span class="remove-range" data-id="${d.id}">×</span>
+      `;
+
       list.appendChild(tag);
     });
+
     document.querySelectorAll(".remove-range").forEach(b => {
       b.onclick = async (e) => {
-        await deleteDoc(doc(db, "users", currentUser.uid, "availability", e.target.dataset.id));
+        await deleteDoc(
+          doc(db, "users", currentUser.uid, "availability", e.target.dataset.id)
+        );
+
         await loadAvailability();
         await generateStudyPlan();
       };
     });
   }
 </script>
+
 </body>
 </html>
