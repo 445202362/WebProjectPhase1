@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Plan — Brain Route</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><img src="Logo.png" alt="Brain Route Logo"></div>
+      <div class="logo-text">Brain Route <small>Planner</small></div>
+    </div>
+
+    <a class="nav-item" href="dashboard.html">Dashboard</a>
+    <a class="nav-item" href="courses.html">Courses</a>
+    <a class="nav-item" href="deadlines.html">Deadlines</a>
+    <a class="nav-item active" href="study-plan.html">Study Plan</a>
+    <a class="nav-item" href="progress.html">Progress</a>
+    <a class="nav-item" href="reminders.html">Reminders</a>
+    <a class="nav-item" href="chatbot.html">Chat With AI</a>
+    
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-initial">S</div>
+      <div class="user-details">
+        <div class="user-name" id="sidebar-name">Student</div>
+        <div class="user-status">Logged in</div>
+      </div>
+    </div>
+
+    <a class="nav-item logout" id="logout-btn" href="index.html">Log Out</a>
+  </div>
+
+  <div class="main-area">
+    <div class="page-header">
+      <div class="header-title-group">
+        <h2>Study Plan & Availability</h2>
+        <div class="week-nav-controls">
+          <button id="prev-week" class="button button-small">← Prev Week</button>
+          <span id="current-week-label" class="week-label-text"></span>
+          <button id="next-week" class="button button-small">Next Week →</button>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="user-avatar-header" id="header-initial">S</div>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="widget">
+        <div class="widget-header">
+          <h3>Generated Weekly Study Plan</h3>
+        </div>
+
+        <div class="weekly-grid" id="weekly-plan-grid">
+          <div class="weekday-column"><h4>Sun</h4></div>
+          <div class="weekday-column"><h4>Mon</h4></div>
+          <div class="weekday-column"><h4>Tue</h4></div>
+          <div class="weekday-column"><h4>Wed</h4></div>
+          <div class="weekday-column"><h4>Thu</h4></div>
+          <div class="weekday-column"><h4>Fri</h4></div>
+          <div class="weekday-column"><h4>Sat</h4></div>
+        </div>
+
+        <div class="reschedule-banner">
+          <span class="reschedule-banner-text"><b>Task List:</b> View your tasks for the week.</span>
+        </div>
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="widget">
+        <div class="widget-header">
+          <h3>Manage Study Availability</h3>
+        </div>
+
+        <div class="custom-range-row">
+          <div class="form-field">
+            <label>DAY</label>
+            <select id="custom-day">
+              <option>Every Day</option>
+              <option>Sunday</option>
+              <option>Monday</option>
+              <option>Tuesday</option>
+              <option>Wednesday</option>
+              <option>Thursday</option>
+              <option>Friday</option>
+              <option>Saturday</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>FROM</label>
+            <input type="time" id="range-from" value="08:00">
+          </div>
+
+          <div class="form-field">
+            <label>TO</label>
+            <input type="time" id="range-to" value="12:00">
+          </div>
+
+          <button class="button button-primary button-tall" id="add-period-btn">+ Add Period</button>
+        </div>
+
+        <label class="label-section">ACTIVE PERIODS</label>
+        <div id="ranges-list" class="active-ranges-list"></div>
+
+        <div class="form-actions-spaced">
+          <button class="button button-primary" id="save-btn">Update Plan View</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, db } from "./firebase-config.js";
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    collection,
+    getDocs,
+    addDoc,
+    deleteDoc,
+    doc,
+    query,
+    orderBy,
+    getDoc,
+    updateDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // ── Global state ──────────────────────────────────────────────
+  let currentUser = null;
+  let currentAvailability = [];
+  let weekOffset = 0;
+
+  // The three states a session card can be in.
+  const STATE_CYCLE = ["default", "completed", "missed"];
+
+  // Maps each state to the CSS class that styles the card differently
+  const STATE_SLOT_CLASS = {
+    default: "",
+    completed: "is-completed",
+    missed: "is-missed"
+  };
+
+  // ── Helper functions ──────────────────────────────────────────
+
+  // Returns the Sunday of the week that is (offset) weeks away from today.
+  function getStartDateOfWeek(offset) {
+    const d = new Date();
+    const day = d.getDay();
+    const diff = d.getDate() - day + (offset * 7);
+    return new Date(d.setDate(diff));
+  }
+
+  // Formats a Date object as a short string
+  function formatDate(date) {
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric"
+    });
+  }
+
+  // Formats a Date object as "YYYY-MM-DD"
+  function normalizeDate(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }
+
+  // Converts a time string into total minutes
+  function timeToMinutes(t) {
+    if (!t) return 0;
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  }
+
+  // Converts a number of minutes back to a time string
+  function minutesToTime(totalMinutes) {
+    const h = Math.floor(totalMinutes / 60);
+    const m = Math.round(totalMinutes % 60);
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+  }
+
+  // Returns the CSS priority class name for a session card's colour
+  function getPriorityClass(priority) {
+    return String(priority || "medium").toLowerCase();
+  }
+
+  // ── Auth guard ────────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "index.html";
+      return;
+    }
+
+    currentUser = user;
+
+    const snap = await getDoc(doc(db, "users", user.uid, "profile", "info"));
+
+    if (snap.exists()) {
+      const firstName = snap.data().firstName;
+      const initial = firstName ? firstName[0].toUpperCase() : "N";
+
+      document.getElementById("sidebar-initial").textContent = initial;
+      document.getElementById("header-initial").textContent = initial;
+      document.getElementById("sidebar-name").textContent = firstName || "User";
+    }
+
+    await loadAvailability();
+    await generateStudyPlan();
+  });
+
+  // ── Session state toggling ────────────────────────────────────
+  async function toggleSessionState(taskId, sessionKey, currentState) {
+    const currentIndex = STATE_CYCLE.indexOf(currentState);
+    const safeIndex = currentIndex === -1 ? 0 : currentIndex;
+    const nextState = STATE_CYCLE[(safeIndex + 1) % STATE_CYCLE.length];
+
+    try {
+      // Save the new state to Firestore.
+      await updateDoc(doc(db, "users", currentUser.uid, "deadlines", taskId), {
+        [`sessionStates.${sessionKey}`]: nextState
+      });
+
+      // If the session was marked as missed, find the next free slot and add a replacement session there.
+      if (nextState === "missed") {
+        await rescheduleAfterMiss(taskId, sessionKey);
+      }
+
+      await generateStudyPlan();
+    } catch (err) {
+      console.error("Failed to update session state:", err);
+    }
+  }
+
+  // ── Automatic rescheduling ──────────────────────────────────────
+  async function rescheduleAfterMiss(taskId, missedSessionKey) {
+    try {
+      // Load fresh data for this deadline from Firestore
+      const taskSnap = await getDoc(doc(db, "users", currentUser.uid, "deadlines", taskId));
+      if (!taskSnap.exists()) return;
+      const task = taskSnap.data();
+
+      // Don't reschedule if the deadline is already marked as done
+      if (task.status === "completed") return;
+
+      // The session key format is "YYYY-MM-DD_HH:MM_COURSECODE"
+      // We split by "_" and take the first part to get just the date
+      const missedDateStr = missedSessionKey.split("_")[0];
+      const missedDate = new Date(missedDateStr + "T00:00:00");
+
+      const daysOfWeek = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+      // Get the current saved session states so we don't book a slot twice
+      const sessionStates = task.sessionStates || {};
+
+      // Search the next 14 days after the missed session for a free slot
+      for (let offset = 1; offset <= 14; offset++) {
+        const candidateDay = new Date(missedDate);
+        candidateDay.setDate(missedDate.getDate() + offset);
+        candidateDay.setHours(0, 0, 0, 0);
+
+        // Stop searching if we've reached or passed the deadline's due date
+        const dueDate = new Date(task.dueDate + "T00:00:00");
+        dueDate.setHours(0, 0, 0, 0);
+        if (candidateDay >= dueDate) break;
+
+        const dayName = daysOfWeek[candidateDay.getDay()];
+        const dateStr = normalizeDate(candidateDay);
+
+        // Check if this day has any availability
+        const hasAvailability = currentAvailability.some(s => {
+          return s.day === dayName || s.day === "Every Day";
+        });
+
+        if (!hasAvailability) continue;
+
+        // Build the bonus key for this day and task.
+        const bonusKey = `${dateStr}_bonus_${task.courseCode}`;
+
+        // If there's no bonus session on this day yet, add one
+        if (!sessionStates[bonusKey]) {
+          await updateDoc(doc(db, "users", currentUser.uid, "deadlines", taskId), {
+            [`sessionStates.${bonusKey}`]: "default"
+          });
+          return;
+        }
+      }
+    } catch (err) {
+      console.error("Reschedule after miss failed:", err);
+    }
+  }
+
+  // ── Study plan generation ─────────────────────────────────────
+  async function generateStudyPlan() {
+    if (!currentUser || currentAvailability.length === 0) return;
+
+    try {
+      // Load deadlines ordered by priority so the most urgent appear first
+      const q = query(
+        collection(db, "users", currentUser.uid, "deadlines"),
+        orderBy("priority", "asc")
+      );
+
+      const deadlineSnap = await getDocs(q);
+      const allDeadlines = [];
+
+      deadlineSnap.forEach(d => {
+        allDeadlines.push({
+          id: d.id,
+          ...d.data()
+        });
+      });
+
+      const startDate = getStartDateOfWeek(weekOffset);
+      startDate.setHours(0, 0, 0, 0);
+
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 6);
+
+      document.getElementById("current-week-label").textContent =
+        `${formatDate(startDate)} - ${formatDate(endDate)}`;
+
+      const daysOfWeek = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+      ];
+
+      const grid = document.getElementById("weekly-plan-grid");
+      const columns = grid.querySelectorAll(".weekday-column");
+
+      // Loop through all 7 days of the week
+      daysOfWeek.forEach((dayName, colIdx) => {
+        const currentDayDate = new Date(startDate);
+        currentDayDate.setDate(startDate.getDate() + colIdx);
+        currentDayDate.setHours(0, 0, 0, 0);
+
+        // Update the column header to show day name and date
+        const h4 = columns[colIdx].querySelector("h4");
+        h4.innerHTML = `${dayName} <br><small>${formatDate(currentDayDate)}</small>`;
+
+        // Clear any session cards from the previous render before redrawing
+        const oldSlots = columns[colIdx].querySelectorAll(".study-slot");
+        oldSlots.forEach(s => s.remove());
+
+        // Find which availability slots apply to this day
+        const daySlots = currentAvailability.filter(slot => {
+          return slot.day === dayName || slot.day === "Every Day";
+        });
+
+        // For each availability slot on this day, divide it among all active tasks
+        daySlots.forEach(slot => {
+
+          // Only show tasks whose deadline is still in the future on this day and the student hasn't already marked as Done
+          const tasksForDay = allDeadlines.filter(task => {
+            if (!task.dueDate) return false;
+            const dueDate = new Date(task.dueDate);
+            dueDate.setHours(0, 0, 0, 0);
+            return currentDayDate < dueDate && task.status !== "completed";
+          });
+
+          const slotStartMinutes = timeToMinutes(slot.from);
+          const slotEndMinutes = timeToMinutes(slot.to);
+          const slotDuration = slotEndMinutes - slotStartMinutes;
+
+          if (slotDuration <= 0 || tasksForDay.length === 0) return;
+
+          // Divide the slot equally
+          const minutesPerTask = slotDuration / tasksForDay.length;
+
+          tasksForDay.forEach((task, taskIndex) => {
+            const dateStr = normalizeDate(currentDayDate);
+
+            // Calculate this task's start and end time within the slot
+            const startTime = minutesToTime(
+              slotStartMinutes + (taskIndex * minutesPerTask)
+            );
+            const endTime = minutesToTime(
+              slotStartMinutes + ((taskIndex + 1) * minutesPerTask)
+            );
+
+            // The session key uniquely identifies this session.
+            const sessionKey = `${dateStr}_${slot.from}_${task.courseCode}`;
+
+            // Look up the student's recorded state for this session
+            const sessionStateMap = task.sessionStates || {};
+            const state = sessionStateMap[sessionKey] || "default";
+
+            // Skip this slot if it was reassigned to another deadline
+            if (state === "reassigned") return;
+
+            const stateClass = STATE_SLOT_CLASS[state] || "";
+
+            // Build the session card element and add it to the column
+            const sessionDiv = document.createElement("div");
+            sessionDiv.className =
+              `study-slot slot-${getPriorityClass(task.priority)} ${stateClass}`.trim();
+
+            sessionDiv.innerHTML = `
+              <strong>${task.courseCode || "Course"}</strong>
+              <span class="slot-time">${task.title || "Study Session"}</span>
+              <span class="slot-time">${startTime} - ${endTime}</span>
+            `;
+
+            // Clicking the card cycles it to the next state
+            sessionDiv.addEventListener("click", () => {
+              toggleSessionState(task.id, sessionKey, state);
+            });
+
+            columns[colIdx].appendChild(sessionDiv);
+          });
+        });
+
+        // ── Bonus sessions ────────────────────────────────────────
+        const dateStr = normalizeDate(currentDayDate);
+        allDeadlines.forEach(task => {
+          if (task.status === "completed") return;
+          const sessionStates = task.sessionStates || {};
+          const bonusKey = `${dateStr}_bonus_${task.courseCode}`;
+
+          // Check if a bonus session exists for this task on this day
+          if (bonusKey in sessionStates) {
+            const state = sessionStates[bonusKey];
+            if (state === "reassigned") return;
+
+            // Show the time of the first available slot on this day
+            const firstSlot = currentAvailability.find(s => {
+              return s.day === dayName || s.day === "Every Day";
+            });
+            const timeDisplay = firstSlot ? firstSlot.from + " - " + firstSlot.to : "Rescheduled";
+
+            const stateClass = STATE_SLOT_CLASS[state] || "";
+            const sessionDiv = document.createElement("div");
+            sessionDiv.className =
+              `study-slot slot-${getPriorityClass(task.priority)} ${stateClass}`.trim();
+
+            sessionDiv.innerHTML = `
+              <strong>${task.courseCode || "Course"}</strong>
+              <span class="slot-time">${task.title || "Study Session"} ★</span>
+              <span class="slot-time">${timeDisplay}</span>
+            `;
+
+            sessionDiv.addEventListener("click", () => {
+              toggleSessionState(task.id, bonusKey, state);
+            });
+
+            columns[colIdx].appendChild(sessionDiv);
+          }
+        });
+      });
+    } catch (error) {
+      console.error("Scheduling Error:", error);
+    }
+  }
+
+  // ── Week navigation ───────────────────────────────────────────
+  document.getElementById("prev-week").onclick = () => {
+    weekOffset--;
+    generateStudyPlan();
+  };
+
+  document.getElementById("next-week").onclick = () => {
+    weekOffset++;
+    generateStudyPlan();
+  };
+
+  // ── Add availability period ───────────────────────────────────
+  document.getElementById("add-period-btn").onclick = async () => {
+    const day  = document.getElementById("custom-day").value;
+    const from = document.getElementById("range-from").value;
+    const to   = document.getElementById("range-to").value;
+
+    if (from && to) {
+      // Save the new availability slot to Firestore
+      await addDoc(collection(db, "users", currentUser.uid, "availability"), {
+        day,
+        from,
+        to
+      });
+
+      // Reload availability then regenerate the plan to reflect the new slot
+      await loadAvailability();
+      await generateStudyPlan();
+    }
+  };
+
+  // Manually trigger a plan refresh
+  document.getElementById("save-btn").onclick = () => {
+    generateStudyPlan();
+  };
+
+  // ── Logout ────────────────────────────────────────────────────
+  document.getElementById("logout-btn").onclick = async () => {
+    await signOut(auth);
+    window.location.href = "index.html";
+  };
+
+  // ── Load availability ─────────────────────────────────────────
+  async function loadAvailability() {
+    const q = query(collection(db, "users", currentUser.uid, "availability"));
+    const snap = await getDocs(q);
+
+    currentAvailability = [];
+
+    const list = document.getElementById("ranges-list");
+    list.innerHTML = "";
+
+    snap.forEach(d => {
+      const data = d.data();
+
+      // Store the slot in memory so generateStudyPlan can use it
+      currentAvailability.push({
+        id: d.id,
+        ...data
+      });
+
+      // Show the slot as a tag in the "Active Periods" section
+      const tag = document.createElement("div");
+      tag.className = "range-tag";
+
+      tag.innerHTML = `
+        <span>${data.day}: ${data.from} - ${data.to}</span>
+        <span class="remove-range" data-id="${d.id}">×</span>
+      `;
+
+      list.appendChild(tag);
+    });
+
+    // Attach a delete handler to every × button
+    document.querySelectorAll(".remove-range").forEach(b => {
+      b.onclick = async (e) => {
+        await deleteDoc(
+          doc(db, "users", currentUser.uid, "availability", e.target.dataset.id)
+        );
+
+        await loadAvailability();
+        await generateStudyPlan();
+      };
+    });
+  }
+</script>
+
+</body>
+</html>
