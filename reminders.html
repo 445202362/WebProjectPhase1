@@ -226,72 +226,92 @@
   }
 
   function buildGeneratedSessions(deadlines, availability, earlyMinutes, includePast = false) {
-    const sessions = [];
-    const now = new Date();
+  const sessions = [];
+  const now = new Date();
 
-    const windowStart = includePast
-      ? new Date(now.getTime() - 14 * 24 * 60 * 60000)
-      : new Date(now);
+  const sortedDeadlines = [...deadlines].sort((a, b) => {
+    const priorityA = Number(a.priority) || 999;
+    const priorityB = Number(b.priority) || 999;
+    return priorityA - priorityB;
+  });
 
-    const windowEnd = includePast
-      ? new Date(now)
-      : new Date(now.getTime() + earlyMinutes * 60000);
+  const windowStart = includePast
+    ? new Date(now.getTime() - 14 * 24 * 60 * 60000)
+    : new Date(now);
 
-    const currentDayDate = new Date(windowStart);
-    currentDayDate.setHours(0, 0, 0, 0);
+  const windowEnd = includePast
+    ? new Date(now)
+    : new Date(now.getTime() + earlyMinutes * 60000);
 
-    while (currentDayDate <= windowEnd) {
-      const dayName = daysOfWeek[currentDayDate.getDay()];
-      const dateStr = normalizeDate(currentDayDate);
+  const currentDayDate = new Date(windowStart);
+  currentDayDate.setHours(0, 0, 0, 0);
 
-      const daySlots = availability.filter(slot =>
-        slot.day === dayName || slot.day === "Every Day"
-      );
+  while (currentDayDate <= windowEnd) {
+    const dayName = daysOfWeek[currentDayDate.getDay()];
+    const dateStr = normalizeDate(currentDayDate);
 
-      daySlots.forEach(slot => {
-        const startTime = slot.from || "00:00";
-        const endTime = slot.to || "00:00";
+    const daySlots = availability.filter(slot =>
+      slot.day === dayName || slot.day === "Every Day"
+    );
+
+    daySlots.forEach(slot => {
+      const tasksForSession = sortedDeadlines.filter(task => {
+        if (!task.dueDate) return false;
+        if (task.status === "completed") return false;
+
+        const dueDate = new Date(task.dueDate + "T00:00:00");
+        dueDate.setHours(0, 0, 0, 0);
+
+        return currentDayDate < dueDate;
+      });
+
+      const slotStartMinutes = timeToMinutes(slot.from);
+      const slotEndMinutes = timeToMinutes(slot.to);
+      const slotDuration = slotEndMinutes - slotStartMinutes;
+
+      if (slotDuration <= 0 || tasksForSession.length === 0) return;
+
+      const minutesPerTask = slotDuration / tasksForSession.length;
+
+      tasksForSession.forEach((task, taskIndex) => {
+        const startTime = minutesToTime(
+          slotStartMinutes + (taskIndex * minutesPerTask)
+        );
+
+        const endTime = minutesToTime(
+          slotStartMinutes + ((taskIndex + 1) * minutesPerTask)
+        );
+
         const sessionDate = new Date(`${dateStr}T${startTime}`);
 
         if (includePast && sessionDate >= now) return;
         if (!includePast && sessionDate < now) return;
         if (!includePast && sessionDate > windowEnd) return;
 
-        const tasksForSession = deadlines.filter(task => {
-          if (!task.dueDate) return false;
-          if (task.status === "completed") return false;
+        const sessionKey = `${dateStr}_${slot.from}_${task.courseCode}`;
+        const status = (task.sessionStates && task.sessionStates[sessionKey]) || "default";
 
-          const dueDate = new Date(task.dueDate + "T00:00:00");
-          dueDate.setHours(0, 0, 0, 0);
-
-          return currentDayDate < dueDate;
-        });
-
-        tasksForSession.forEach(task => {
-          const sessionKey = `${dateStr}_${slot.from}_${task.courseCode}`;
-          const status = (task.sessionStates && task.sessionStates[sessionKey]) || "default";
-
-          sessions.push({
-            type: "Session",
-            title: "Study Session",
-            courseCode: task.courseCode,
-            taskTitle: task.title || "Study Session",
-            date: dateStr,
-            startTime,
-            endTime,
-            status,
-            sessionKey,
-            taskId: task.id
-          });
+        sessions.push({
+          type: "Session",
+          title: "Study Session",
+          courseCode: task.courseCode,
+          taskTitle: task.title || "Study Session",
+          date: dateStr,
+          startTime,
+          endTime,
+          status,
+          sessionKey,
+          taskId: task.id
         });
       });
+    });
 
-      currentDayDate.setDate(currentDayDate.getDate() + 1);
-      currentDayDate.setHours(0, 0, 0, 0);
-    }
-
-    return sessions;
+    currentDayDate.setDate(currentDayDate.getDate() + 1);
+    currentDayDate.setHours(0, 0, 0, 0);
   }
+
+  return sessions;
+}
 
   async function loadProfile(user) {
     const uid = user.uid;
