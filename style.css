@@ -860,9 +860,9 @@ input:focus, select:focus, textarea:focus {
 }
 
 
-.slot-high   { background-color: #ffcccc !important; } 
-.slot-medium { background-color: #fff4cc !important; } 
-.slot-low    { background-color: #d1ffcc !important; }
+.slot-high   { background-color: #FFEBEE !important; border: 2px solid #B42318 !important; }
+.slot-medium { background-color: #FFF3C4 !important; border: 2px solid #92700A !important; }
+.slot-low    { background-color: #E0F2F1 !important; border: 2px solid #0F6E56 !important; }
 
 
 .status-indicator { min-height: 12px; }
