@@ -846,64 +846,52 @@ input:focus, select:focus, textarea:focus {
    17. STUDY PLAN PAGE OVERRIDES
    ============================================================ */
 
-.weekly-grid    { gap: 10px; margin-top: 20px; }
-.study-slot     { min-height: 60px; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
-.slot-time      { font-size: 9px; opacity: 0.7; margin-top: 4px; }
+.weekly-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; margin-top: 20px; }
+.weekday-column { background: transparent; border: none; padding: 5px; min-height: 450px; }
+.weekday-column h4 { text-align: center; margin-bottom: 20px; font-size: 14px; font-weight: 700; color: var(--text-dark); }
+
+.study-slot { 
+    padding: 12px; border-radius: 8px; border: 2px solid var(--border-color); 
+    margin-bottom: 10px; font-size: 11px; display: flex; flex-direction: column;
+    justify-content: center; min-height: 60px; background-color: #ffffff;
+    box-shadow: 2px 2px 0 var(--border-color);
+    cursor: pointer; transition: all 0.3s ease;
+    position: relative; 
+}
+
+
+.slot-high   { background-color: #ffcccc !important; } 
+.slot-medium { background-color: #fff4cc !important; } 
+.slot-low    { background-color: #d1ffcc !important; }
+
+
+.status-indicator { min-height: 12px; }
+.slot-time { font-size: 10px; opacity: 0.8; font-weight: 600; margin-top: 4px; }
+.task-type-label { font-size: 10px; font-weight: 700; margin-top: 6px; text-transform: capitalize; }
 
 .header-with-stats { display: flex; align-items: center; gap: 12px; }
-.total-hours-pill  {
-  font-size: 11px;
-  background: var(--text-dark);
-  color: #fff;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-weight: 500;
-}
-
-.custom-range-row {
-  display: flex;
-  gap: 15px;
-  align-items: flex-end;
-  background: var(--background-outer);
-  padding: 20px;
-  border-radius: 12px;
-  border: 2px dashed var(--border-color);
-  margin-bottom: 25px;
-}
-
-.active-ranges-list { margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px; }
-
-.range-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 15px;
-  background: var(--pastel-lavender);
-  border: var(--border-width) solid var(--border-color);
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  box-shadow: 2px 2px 0 var(--text-dark);
-}
-
-.remove-range   { cursor: pointer; font-weight: 900; font-size: 16px; }
-.reschedule-banner {
-  margin-top: 25px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 15px;
-  background: var(--background-outer);
-  border: 1.5px solid var(--border-color);
-  border-radius: 10px;
-}
+.total-hours-pill { font-size: 11px; background: var(--text-dark); color: #fff; padding: 4px 12px; border-radius: 20px; font-weight: 500; }
+.custom-range-row { display: flex; gap: 15px; align-items: flex-end; background: var(--background-outer); padding: 20px; border-radius: 12px; border: 2px dashed var(--border-color); margin-bottom: 25px; }
+.range-tag { display: inline-flex; align-items: center; gap: 10px; padding: 8px 15px; background: var(--pastel-lavender); border: 2px solid var(--border-color); border-radius: 8px; font-size: 13px; font-weight: 600; box-shadow: 2px 2px 0 var(--text-dark); }
+.remove-range { cursor: pointer; font-weight: 900; font-size: 16px; margin-left: 5px; }
+.reschedule-banner { margin-top: 25px; display: flex; align-items: center; gap: 10px; padding: 15px; background: var(--background-outer); border: 1.5px solid var(--border-color); border-radius: 10px; }
 .reschedule-banner-text { font-size: 12px; font-weight: 600; }
-.section-divider        { margin: 30px 0; border: none; border-top: 2px solid var(--border-color); opacity: 0.1; }
-.button-tall            { height: 45px; }
-.label-section          { font-size: 11px; font-weight: 700; color: var(--text-secondary); letter-spacing: 1px; display: block; }
-.form-actions-spaced    { margin-top: 30px; display: flex; gap: 8px; }
-.form-field-wide        { flex: 2; }
+.section-divider { margin: 30px 0; border: none; border-top: 2px solid var(--border-color); opacity: 0.1; }
+.button-tall { height: 45px; }
+.label-section { font-size: 11px; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 8px; }
+.form-actions-spaced { margin-top: 30px; display: flex; gap: 8px; }
 
+.study-slot.is-completed {
+    background-color: #d1ffcc !important; 
+    border-color: #2ecc71 !important;
+    opacity: 0.6;
+}
+
+.study-slot.is-missed {
+    background-color: #ffcccc !important; 
+    border: 2px dashed #e74c3c !important;
+    opacity: 1;
+}
 
 /* ============================================================
    18. PROGRESS PAGE
@@ -920,6 +908,72 @@ input:focus, select:focus, textarea:focus {
 .fill-85   { width: 85%; }
 .fill-60   { width: 60%; }
 .fill-90   { width: 90%; }
+
+
+.week-nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.week-label-text {
+    font-weight: 600;
+    min-width: 160px;
+    text-align: center;
+}
+
+.text-small {
+    font-size: 12px;
+}
+
+
+.progress-list-container {
+    padding-top: 10px;
+}
+
+.progress-item-container {
+    margin-bottom: 25px;
+}
+
+.progress-header-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.course-code-label {
+    font-weight: 600;
+    color: #172c51;
+}
+
+.percent-label {
+    font-weight: 600;
+    color: #6c5ce7;
+}
+
+.progress-bar-wrapper {
+    background: #e9ecef;
+    height: 14px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+
+.progress-bar-fill-dynamic {
+    background: linear-gradient(90deg, #6c5ce7, #a29bfe);
+    height: 100%;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-footer-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+}
+
+.footer-text {
+    color: #666;
+}
 
 
 /* ============================================================
