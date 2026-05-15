@@ -64,7 +64,7 @@
               <tr>
                 <th>COURSE CODE</th>
                 <th>COURSE NAME</th>
-                <th>STUDY DAYS</th>
+                <th>LECTURE DAYS</th>
                 <th>ASSIGNMENTS</th>
                 <th>EXAMS</th>
                 <th>ACTIONS</th>
@@ -103,7 +103,7 @@
         </div>
  
         <div class="form-group">
-          <label>STUDY DAYS</label>
+          <label>LECTURE DAYS</label>
           <div class="days-grid">
             <input type="checkbox" id="day-sun" class="day-toggle" hidden>
             <label for="day-sun" class="day-pill">Sun</label>
@@ -227,7 +227,7 @@
       const id  = docSnap.id;      // Firestore document ID, needed for edit & delete
 
       // Pick badge colour based on the course code
-      const badgeClasses = ["badge-lavender", "badge-mint", "badge-yellow", "badge-neutral"];
+      const badgeClasses = ["badge-lavender", "badge-mint", "badge-pink", "badge-yellow"];
       const badgeClass   = badgeClasses[id.charCodeAt(0) % badgeClasses.length];
 
       // Study days joined with a separator for display
