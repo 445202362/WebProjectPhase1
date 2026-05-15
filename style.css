@@ -800,9 +800,9 @@ input:focus, select:focus, textarea:focus {
   box-sizing: border-box;
 }
 
-.auth-brand         { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-.auth-brand img     { width: 200px; height: auto; }
-.auth-brand-name    { font-size: 60px; font-weight: 700; color: #ffffff; white-space: nowrap; }
+.auth-brand         { display: flex; align-items: center; gap: 8px; margin-bottom: -20px; }
+.auth-brand img     { width: 150px; height: auto; }
+.auth-brand-name    { font-size: 40px; font-weight: 700; color: #ffffff; white-space: nowrap; }
 .auth-title         { font-size: 28px; font-weight: 700; color: #ffffff; line-height: 1.35; margin-bottom: 14px; }
 .auth-desc          { font-size: 13px; color: var(--sidebar-text-light); line-height: 1.7; margin: 0; }
 
