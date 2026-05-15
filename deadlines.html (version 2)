@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deadlines — BrainRoute</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+ 
+<div class="layout">
+ 
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <img src="Logo.png" alt="Brain Route Logo">
+      </div>
+      <div class="logo-text">
+        Brain Route
+        <small>Planner</small>
+      </div>
+    </div>
+    <a class="nav-item" href="dashboard.html">Dashboard</a>
+    <a class="nav-item" href="courses.html">Courses</a>
+    <a class="nav-item active" href="deadlines.html">Deadlines</a>
+    <a class="nav-item" href="study-plan.html">Study Plan</a>
+    <a class="nav-item" href="progress.html">Progress</a>
+    <a class="nav-item" href="reminders.html">Reminders</a>
+    <a class="nav-item" href="chatbot.html">Chat With AI</a>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-initial">S</div>
+      <div class="user-details">
+        <div class="user-name" id="sidebar-name">Student</div>
+        <div class="user-status">Logged in</div>
+      </div>
+    </div>
+    <a class="nav-item logout" id="logout-btn" href="#">Log Out</a>
+  </div>
+ 
+  <!-- Main Area -->
+  <div class="main-area">
+    <div class="page-header">
+      <h2>Manage Deadlines</h2>
+      <div class="header-actions">
+        <div class="user-avatar-header" id="header-initial">S</div>
+      </div>
+    </div>
+ 
+    <div class="page-content">
+ 
+      <!-- Upcoming Deadlines Table -->
+      <div class="widget">
+        <div class="widget-header">
+          <h3>Upcoming Deadlines</h3>
+          <span class="status-badge badge-danger" id="deadline-count">0 upcoming</span>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>COURSE</th>
+                <th>TITLE</th>
+                <th>DUE DATE</th>
+                <th>TYPE</th>
+                <th>PRIORITY</th>
+                <th>STATUS</th>
+                <th>ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="deadlines-tbody">
+              <tr>
+                <td colspan="7" class="td-empty">Loading deadlines…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+ 
+      <!-- Add / Edit Deadline Form -->
+      <div class="widget">
+        <div class="widget-header">
+          <h3 id="form-title">Add Deadline</h3>
+          <button class="button button-secondary button-small hidden" id="cancel-edit-btn">Cancel Edit</button>
+        </div>
+ 
+        <div id="form-error" class="form-error-banner"></div>
+ 
+        <input type="hidden" id="editing-id" value="">
+ 
+        <div class="form-row">
+          <div class="form-field">
+            <label for="dl-course">COURSE</label>
+            <select id="dl-course">
+              <option value="">Select course…</option>
+            </select>
+          </div>
+          <div class="form-field form-field-wide">
+            <label for="dl-title">TITLE</label>
+            <input type="text" id="dl-title" placeholder="e.g. Project Phase 1" maxlength="100">
+          </div>
+        </div>
+ 
+        <div class="form-row">
+          <div class="form-field">
+            <label for="dl-date">DUE DATE</label>
+            <input type="date" id="dl-date">
+          </div>
+          <div class="form-field">
+            <label for="dl-type">TYPE</label>
+            <select id="dl-type">
+              <option value="assignment">Assignment</option>
+              <option value="exam">Exam</option>
+              <option value="quiz">Quiz</option>
+              <option value="project">Project</option>
+            </select>
+          </div>
+        </div>
+ 
+        <div class="form-actions">
+          <button class="button button-primary" id="save-btn">Save Deadline</button>
+          <button class="button button-secondary" id="clear-btn">Clear</button>
+        </div>
+      </div>
+ 
+    </div>
+  </div>
+</div>
+
+<div id="confirm-overlay" class="modal-overlay">
+  <div class="modal-card">
+    <h4 id="modal-title" class="modal-title"></h4>
+    <p id="modal-message" class="modal-message"></p>
+    <div class="modal-actions">
+      <button id="confirm-cancel" class="button button-secondary">Cancel</button>
+      <button id="confirm-ok" class="button button-danger">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, db } from "./firebase-config.js";
+  import {
+    onAuthStateChanged, signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc, query, orderBy
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // ── Global state ──────────────────────────────────────────────
+  let currentUser = null;
+
+  // ── Auth guard ────────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "index.html";
+      return;
+    }
+    currentUser = user;
+
+    try {
+      const snap = await getDoc(doc(db, "users", user.uid, "profile", "info"));
+      if (snap.exists()) {
+        const firstName = snap.data().firstName;
+        const initial = firstName ? firstName[0].toUpperCase() : "S";
+        document.getElementById("sidebar-initial").textContent = initial;
+        document.getElementById("header-initial").textContent = initial;
+        document.getElementById("sidebar-name").textContent = firstName || "Student";
+      }
+    } catch (e) { /* keep default */ }
+
+    await loadCourseOptions();
+    await loadDeadlines();
+  });
+
+  // ── Logout ────────────────────────────────────────────────────
+  document.getElementById("logout-btn").addEventListener("click", async (e) => {
+    e.preventDefault();
+    await signOut(auth);
+    window.location.href = "index.html";
+  });
+
+  // ── Helper functions ──────────────────────────────────────────
+
+  // Fills the course dropdown in the form with all courses from Firestore.
+  async function loadCourseOptions(selectedCode = "") {
+    const select = document.getElementById("dl-course");
+    const snapshot = await getDocs(collection(db, "users", currentUser.uid, "courses"));
+    select.innerHTML = `<option value="">Select course…</option>`;
+    snapshot.forEach((docSnap) => {
+      const c = docSnap.data();
+      const option = document.createElement("option");
+      option.value = c.code;
+      option.textContent = `${c.code} — ${c.name}`;
+      select.appendChild(option);
+    });
+    if (selectedCode) select.value = selectedCode;
+  }
+
+  // Calculates a priority level based on how many days are left until the due date.
+  function calcPriority(dueDateStr) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dueDateStr + "T00:00:00");
+    const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 3) return "High";
+    if (diffDays <= 7) return "Medium";
+    return "Low";
+  }
+
+  // Converts a time string into total minutes
+  function timeToMinutes(t) {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  }
+
+  // Converts total minutes back into a time string
+  function minutesToTime(totalMins) {
+    const h = Math.floor(totalMins / 60);
+    const m = Math.round(totalMins % 60);
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  }
+
+  // Formats a Date object as "YYYY-MM-DD" for use as a Firestore key
+  function normalizeDate(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }
+
+  // ── Mark deadline as Done ─────────────────────────────────────
+  async function markAsCompleted(deadlineId) {
+    try {
+      // Step 1: Load the deadline that is being marked as Done
+      const deadlineSnap = await getDoc(doc(db, "users", currentUser.uid, "deadlines", deadlineId));
+      if (!deadlineSnap.exists()) return;
+      const completedDeadline = { id: deadlineId, ...deadlineSnap.data() };
+
+      // Step 2: Load the student's availability
+      const availSnap = await getDocs(collection(db, "users", currentUser.uid, "availability"));
+      const availability = [];
+      availSnap.forEach(d => availability.push(d.data()));
+
+      // Step 3: Load all other active deadlines sorted by due date
+      const allDeadlinesSnap = await getDocs(
+        query(collection(db, "users", currentUser.uid, "deadlines"), orderBy("dueDate", "asc"))
+      );
+      const otherDeadlines = [];
+      allDeadlinesSnap.forEach(d => {
+        // Skip the deadline being completed and any that are already done
+        if (d.id === deadlineId) return;
+        if (d.data().status === "completed") return;
+        otherDeadlines.push({ id: d.id, ...d.data() });
+      });
+
+      // Step 4: Look through the next 60 days for sessions that belong to the completed deadline
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const daysOfWeek = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+      const sessionStates = completedDeadline.sessionStates || {};
+
+      for (let dayOffset = 0; dayOffset < 60; dayOffset++) {
+        const currentDay = new Date(today);
+        currentDay.setDate(today.getDate() + dayOffset);
+        currentDay.setHours(0, 0, 0, 0);
+
+        const dayName = daysOfWeek[currentDay.getDay()];
+        const dateStr = normalizeDate(currentDay);
+
+        // Find which availability slots apply to this day
+        const daySlots = availability.filter(s => s.day === dayName || s.day === "Every Day");
+
+        // Check each slot for a session belonging to the completed deadline
+        for (const slot of daySlots) {
+          const sessionKey = `${dateStr}_${slot.from}_${completedDeadline.courseCode}`;
+          const currentState = sessionStates[sessionKey] || "default";
+
+          // Only reassign sessions the student has NOT yet acted on
+          if (currentState !== "default") continue;
+
+          // Find which active deadlines are still due after this day
+          const activeTasks = otherDeadlines.filter(t => {
+            if (!t.dueDate) return false;
+            const dueDate = new Date(t.dueDate + "T00:00:00");
+            dueDate.setHours(0, 0, 0, 0);
+            return currentDay < dueDate;
+          });
+
+          if (activeTasks.length === 0) continue;
+
+          // Pick the replacement with the soonest due date
+          let replacement = activeTasks[0];
+          for (let i = 1; i < activeTasks.length; i++) {
+            if (activeTasks[i].dueDate < replacement.dueDate) {
+              replacement = activeTasks[i];
+            }
+          }
+
+          // Mark this slot as "reassigned" on the completed deadline
+          sessionStates[sessionKey] = "reassigned";
+          await updateDoc(doc(db, "users", currentUser.uid, "deadlines", deadlineId), {
+            sessionStates: sessionStates
+          });
+
+          // Give this slot to the replacement deadline
+          const replacementSnap = await getDoc(doc(db, "users", currentUser.uid, "deadlines", replacement.id));
+          if (!replacementSnap.exists()) continue;
+          const replacementStates = replacementSnap.data().sessionStates || {};
+          const replacementKey = `${dateStr}_${slot.from}_${replacement.courseCode}`;
+
+          // Only add if this exact slot isn't already in use for the replacement
+          if (!replacementStates[replacementKey]) {
+            replacementStates[replacementKey] = "default";
+            await updateDoc(doc(db, "users", currentUser.uid, "deadlines", replacement.id), {
+              sessionStates: replacementStates
+            });
+          }
+        }
+      }
+
+      // Step 5: Mark the deadline as completed
+      await updateDoc(doc(db, "users", currentUser.uid, "deadlines", deadlineId), {
+        status: "completed"
+      });
+
+      await loadDeadlines();
+    } catch (err) {
+      console.error("Failed to mark as completed:", err);
+    }
+  }
+
+  // ── Load and display all deadlines ───────────────────────────
+  async function loadDeadlines() {
+    const tbody = document.getElementById("deadlines-tbody");
+    tbody.innerHTML = `<tr><td colspan="7" class="td-empty">Loading…</td></tr>`;
+
+    const q = query(collection(db, "users", currentUser.uid, "deadlines"), orderBy("dueDate", "asc"));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      tbody.innerHTML = `<tr><td colspan="7" class="td-empty">No deadlines yet. Add one below!</td></tr>`;
+      document.getElementById("deadline-count").textContent = "0 upcoming";
+      return;
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+    let upcoming = 0;
+    tbody.innerHTML = "";
+
+    snapshot.forEach((docSnap) => {
+      const d = docSnap.data();
+      const id = docSnap.id;
+
+      // Count upcoming = not completed and due date is today or later
+      if (d.status !== "completed" && d.dueDate >= today) upcoming++;
+
+      const priorityBadge = {
+        "High": "badge-danger",
+        "Medium": "badge-warning",
+        "Low": "badge-neutral"
+      }[d.priority] || "badge-neutral";
+
+      const typeBadge = d.type === "exam" ? "badge-warning" : "badge-neutral";
+
+      const dateDisplay = d.dueDate
+        ? new Date(d.dueDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
+        : "—";
+
+      // Status badge: Done or In Progress
+      const isDone = d.status === "completed";
+
+      let statusBadge = "";
+      if (isDone) {
+        statusBadge = `<span class="status-badge badge-success">Done</span>`;
+      } else {
+        statusBadge = `<span class="status-badge badge-neutral">In Progress</span>`;
+      }
+
+      let actionButtons = "";
+      if (!isDone) {
+        actionButtons += `<button class="button button-success button-small" data-complete="${id}">✓ Check</button>`;
+        actionButtons += `<button class="button button-secondary button-small" data-edit="${id}">Edit</button>`;
+      }
+      actionButtons += `<button class="button button-danger button-small" data-del="${id}">Delete</button>`;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${d.courseCode}</strong></td>
+        <td>${d.title}</td>
+        <td>${dateDisplay}</td>
+        <td><span class="status-badge ${typeBadge}">${capitalize(d.type)}</span></td>
+        <td><span class="status-badge ${priorityBadge}">${d.priority}</span></td>
+        <td>${statusBadge}</td>
+        <td>
+          <div class="table-actions">
+            ${actionButtons}
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById("deadline-count").textContent = `${upcoming} upcoming`;
+
+    tbody.querySelectorAll("button[data-complete]").forEach((btn) => {
+      btn.addEventListener("click", () => markAsCompleted(btn.dataset.complete));
+    });
+    tbody.querySelectorAll("button[data-edit]").forEach((btn) => {
+      btn.addEventListener("click", () => loadDeadlineIntoForm(btn.dataset.edit));
+    });
+    tbody.querySelectorAll("button[data-del]").forEach((btn) => {
+      btn.addEventListener("click", () => deleteDeadline(btn.dataset.del));
+    });
+  }
+
+  // ── Save / Edit deadline form ─────────────────────────────────
+  document.getElementById("save-btn").addEventListener("click", async () => {
+    const errorEl = document.getElementById("form-error");
+    errorEl.classList.remove("form-error-banner");
+    errorEl.textContent = "";
+
+    const courseCode = document.getElementById("dl-course").value.trim();
+    const title = document.getElementById("dl-title").value.trim();
+    const dueDate = document.getElementById("dl-date").value;
+    const type = document.getElementById("dl-type").value;
+    const editingId = document.getElementById("editing-id").value;
+
+    if (!courseCode || !title || !dueDate) {
+      errorEl.textContent = !courseCode ? "Please select a course." : !title ? "Please enter a title." : "Please pick a due date.";
+      errorEl.classList.add("form-error-banner");
+      return;
+    }
+
+    const priority = calcPriority(dueDate);
+    const deadlineData = { courseCode, title, dueDate, type, priority, status: "pending" };
+
+    try {
+      if (editingId) {
+        await updateDoc(doc(db, "users", currentUser.uid, "deadlines", editingId), deadlineData);
+      } else {
+        await addDoc(collection(db, "users", currentUser.uid, "deadlines"), deadlineData);
+      }
+      clearForm();
+      await loadDeadlines();
+    } catch (err) {
+      errorEl.textContent = "Failed to save deadline. Please try again.";
+      errorEl.classList.add("form-error-banner");
+      console.error(err);
+    }
+  });
+
+  // ── Load deadline into the edit form ─────────────────────────
+  async function loadDeadlineIntoForm(deadlineId) {
+    const snap = await getDoc(doc(db, "users", currentUser.uid, "deadlines", deadlineId));
+    if (!snap.exists()) return;
+    const d = snap.data();
+
+    document.getElementById("editing-id").value = deadlineId;
+    document.getElementById("form-title").textContent = "Edit Deadline";
+    document.getElementById("cancel-edit-btn").classList.remove("hidden");
+    document.getElementById("save-btn").textContent = "Save Changes";
+
+    await loadCourseOptions(d.courseCode || "");
+    document.getElementById("dl-title").value = d.title || "";
+    document.getElementById("dl-date").value = d.dueDate || "";
+    document.getElementById("dl-type").value = d.type || "assignment";
+
+    const errorEl = document.getElementById("form-error");
+    errorEl.classList.remove("form-error-banner");
+    errorEl.textContent = "";
+    document.getElementById("form-title").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // ── Custom confirm modal ──────────────────────────────────────
+  let pendingCallback = null;
+  function showConfirm(title, message, onOk) {
+    document.getElementById("modal-title").textContent = title;
+    document.getElementById("modal-message").textContent = message;
+    document.getElementById("confirm-overlay").style.display = "flex";
+    pendingCallback = onOk;
+  }
+  function hideConfirm() {
+    document.getElementById("confirm-overlay").style.display = "none";
+    pendingCallback = null;
+  }
+  document.getElementById("confirm-cancel").addEventListener("click", hideConfirm);
+  document.getElementById("confirm-ok").addEventListener("click", async () => {
+    const fn = pendingCallback;
+    hideConfirm();
+    if (fn) await fn();
+  });
+
+  // ── Delete deadline ───────────────────────────────────────────
+  async function deleteDeadline(deadlineId) {
+    showConfirm("Delete Deadline?", "This will permanently delete this deadline. This cannot be undone.", async () => {
+      try {
+        await deleteDoc(doc(db, "users", currentUser.uid, "deadlines", deadlineId));
+        await loadDeadlines();
+      } catch (err) { console.error("Delete failed:", err); }
+    });
+  }
+
+  // ── Clear / reset the form ────────────────────────────────────
+  function clearForm() {
+    document.getElementById("editing-id").value = "";
+    document.getElementById("form-title").textContent = "Add Deadline";
+    document.getElementById("cancel-edit-btn").classList.add("hidden");
+    document.getElementById("save-btn").textContent = "Save Deadline";
+    document.getElementById("dl-course").value = "";
+    document.getElementById("dl-title").value = "";
+    document.getElementById("dl-date").value = "";
+    document.getElementById("dl-type").value = "assignment";
+    const errorEl = document.getElementById("form-error");
+    errorEl.textContent = "";
+    errorEl.classList.remove("form-error-banner");
+  }
+  document.getElementById("clear-btn").addEventListener("click", clearForm);
+  document.getElementById("cancel-edit-btn").addEventListener("click", clearForm);
+  function capitalize(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ""; }
+</script>
+</body>
+</html>
