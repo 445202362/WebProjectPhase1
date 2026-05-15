@@ -3,37 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Progress & Statistics — Smart Study Planner</title>
- 
-  <!-- Fonts -->
+  <title>Progress & Statistics — Brain Route</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Styles -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
- 
+
 <div class="layout">
- 
-  <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-icon">
-        <img src="Logo.png" alt="Brain Route Logo">
-      </div>
-      <div class="logo-text">
-        Brain Route
-        <small>Planner</small>
-      </div>
+      <div class="logo-icon"><img src="Logo.png" alt="Brain Route Logo"></div>
+      <div class="logo-text">Brain Route <small>Planner</small></div>
     </div>
-  <a class="nav-item" href="dashboard.html">Dashboard</a>
+    <a class="nav-item" href="dashboard.html">Dashboard</a>
     <a class="nav-item" href="courses.html">Courses</a>
     <a class="nav-item" href="deadlines.html">Deadlines</a>
-    <a class="nav-item " href="study-plan.html">Study Plan</a>
+    <a class="nav-item" href="study-plan.html">Study Plan</a>
     <a class="nav-item active" href="progress.html">Progress</a>
     <a class="nav-item" href="reminders.html">Reminders</a>
     <a class="nav-item" href="chatbot.html">Chat With AI</a>
 
-    
     <div class="sidebar-user">
       <div class="user-avatar" id="sidebar-student-initial">S</div>
       <div class="user-details">
@@ -41,174 +30,227 @@
         <div class="user-status">Logged in</div>
       </div>
     </div>
- <a class="nav-item logout" href="index.html">Log Out</a>
+    <a class="nav-item logout" id="logout-btn" href="index.html">Log Out</a>
   </div>
- 
-  <!-- Main Area -->
+
   <div class="main-area">
     <div class="page-header">
-      <h2>Progress & Statistics</h2>
+      <div class="header-title-group">
+        <h2>Progress & Statistics</h2>
+        <div class="week-nav-controls">
+            <button id="prev-week-stats" class="button button-small">← Prev Week</button>
+            <span id="stats-week-label" class="week-label-text"></span>
+            <button id="next-week-stats" class="button button-small">Next Week →</button>
+        </div>
+      </div>
       <div class="header-actions">
-        <div class="user-avatar-header">S</div>
+        <div class="user-avatar-header" id="header-initial">S</div>
       </div>
     </div>
- 
+
     <div class="page-content">
- 
-      <!-- Stat Cards -->
       <div class="stats-grid stats-grid-4">
         <div class="stat-card bg-lavender">
-          <div class="stat-number">20</div>
-          <div class="stat-label">Total Sessions</div>
+          <div class="stat-number" id="stat-total-sessions">0</div>
+          <div class="stat-label">Expected Sessions</div>
         </div>
         <div class="stat-card bg-green">
-          <div class="stat-number">78%</div>
+          <div class="stat-number" id="stat-completion-rate">0%</div>
           <div class="stat-label">Completion Rate</div>
         </div>
         <div class="stat-card bg-soft-red">
-          <div class="stat-number">2</div>
+          <div class="stat-number" id="stat-missed-sessions">0</div>
           <div class="stat-label">Missed Sessions</div>
         </div>
         <div class="stat-card bg-yellow">
-          <div class="stat-number">42h</div>
-          <div class="stat-label">Total Hours</div>
+          <div class="stat-number" id="stat-total-hours">0h</div>
+          <div class="stat-label">Study Availability</div>
         </div>
       </div>
- 
-      <!-- Mark Sessions -->
+
       <div class="widget">
         <div class="widget-header">
-          <h3>Mark Sessions</h3>
+          <h3>Progress Trends by Course</h3>
+          <p class="auth-desc text-small">Showing progress for all registered courses this week.</p>
         </div>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Session</th>
-                <th>Course</th>
-                <th>Date</th>
-                <th>Duration</th>
-                <th>Mark As</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Study CS101</td>
-                <td><strong>CS101</strong></td>
-                <td>Nov 14</td>
-                <td>1.5 hrs</td>
-                <td>
-                  <div class="table-actions">
-                    <button class="button button-warning button-small">Done</button>
-                    <button class="button button-danger button-small">Missed</button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>Review MATH203</td>
-                <td><strong>MATH203</strong></td>
-                <td>Nov 14</td>
-                <td>2 hrs</td>
-                <td>
-                  <div class="table-actions">
-                    <button class="button button-warning button-small">Done</button>
-                    <button class="button button-danger button-small">Missed</button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>ENG305 Essay</td>
-                <td><strong>ENG305</strong></td>
-                <td>Nov 13</td>
-                <td>1 hr</td>
-                <td>
-                  <span class="status-badge badge-success">Completed</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <div id="course-progress-list" class="progress-list-container"></div>
       </div>
- 
-      <!-- Weekly Hours Chart -->
-      <div class="widget">
-        <div class="widget-header">
-          <h3>Weekly Hours</h3>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, db } from "./firebase-config.js";
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  let weekOffset = 0;
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = "index.html"; return; }
+    
+    const profileSnap = await getDoc(doc(db, "users", user.uid, "profile", "info"));
+    if (profileSnap.exists()) {
+      const data = profileSnap.data();
+      const initial = data.firstName ? data.firstName[0].toUpperCase() : "S";
+      document.getElementById("sidebar-student-initial").textContent = initial;
+      document.getElementById("header-initial").textContent = initial;
+      document.getElementById("sidebar-student-name").textContent = data.firstName || "Student";
+    }
+
+    await loadWeeklyStatistics(user.uid);
+  });
+
+  function getStartDateOfWeek(offset) {
+      const d = new Date();
+      const day = d.getDay();
+      const diff = d.getDate() - day + (offset * 7);
+      const res = new Date(d.setDate(diff));
+      res.setHours(0,0,0,0);
+      return res;
+  }
+
+  function timeToMinutes(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+  function minutesToTime(m) {
+    const h = Math.floor(m / 60); const min = Math.round(m % 60);
+    return `${h.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+  }
+
+  async function loadWeeklyStatistics(userId) {
+    try {
+      const startDate = getStartDateOfWeek(weekOffset);
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 6);
+      endDate.setHours(23, 59, 59, 999);
+
+      document.getElementById("stats-week-label").textContent =
+        `${startDate.toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${endDate.toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
+
+      const [coursesSnap, availSnap, deadlineSnap] = await Promise.all([
+        getDocs(collection(db, "users", userId, "courses")),
+        getDocs(collection(db, "users", userId, "availability")),
+        getDocs(collection(db, "users", userId, "deadlines"))
+      ]);
+
+      // Build courseStats map
+      const courseStats = {};
+      coursesSnap.forEach(c => {
+        const code = c.data().code;
+        courseStats[code] = { done: 0, total: 0 };
+      });
+
+      // Build availability and deadlines arrays
+      const availability = [];
+      availSnap.forEach(av => availability.push(av.data()));
+
+      const allDeadlines = [];
+      deadlineSnap.forEach(d => allDeadlines.push({ id: d.id, ...d.data() }));
+
+      let totalExpectedInWeek = 0;
+      let totalAvailableMinutes = 0;
+      let completedInWeek = 0;
+      let missedInWeek = 0;
+
+      // Calculate total available hours (same logic as study-plan)
+      availability.forEach(({ day, from, to }) => {
+        const duration = timeToMinutes(to) - timeToMinutes(from);
+        const multiplier = (day === "Every Day") ? 7 : 1;
+        totalAvailableMinutes += duration * multiplier;
+      });
+
+      // Simulate the same session generation logic as study-plan.html
+      const daysOfWeek = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+      let queueIndex = 0;
+
+      daysOfWeek.forEach((dayName, colIdx) => {
+        const currentDayDate = new Date(startDate);
+        currentDayDate.setDate(startDate.getDate() + colIdx);
+        currentDayDate.setHours(0,0,0,0);
+
+        const daySlots = availability.filter(s => s.day === dayName || s.day === "Every Day");
+
+        daySlots.forEach(slot => {
+          const duration = timeToMinutes(slot.to) - timeToMinutes(slot.from);
+          const numSessions = duration > 100 ? 2 : 1;
+          const minsPerSession = duration / numSessions;
+
+          for (let i = 0; i < numSessions; i++) {
+            const activeTasks = allDeadlines.filter(t => {
+              const dueDate = new Date(t.dueDate);
+              dueDate.setHours(0,0,0,0);
+              return currentDayDate < dueDate;
+            });
+
+            if (activeTasks.length === 0) continue;
+
+            const task = activeTasks[queueIndex % activeTasks.length];
+            queueIndex++;
+
+            totalExpectedInWeek++;
+
+            const sessionStart = minutesToTime(timeToMinutes(slot.from) + (i * minsPerSession));
+            const dateStr = currentDayDate.toISOString().split('T')[0];
+            const sessionKey = `${dateStr}_${sessionStart}_${task.courseCode}`;
+            const sessionStates = task.sessionStates || {};
+            const status = sessionStates[sessionKey] || "default";
+
+            const courseCode = task.courseCode;
+            if (courseStats[courseCode]) {
+              courseStats[courseCode].total++;
+              if (status === "completed") {
+                courseStats[courseCode].done++;
+                completedInWeek++;
+              } else if (status === "missed") {
+                missedInWeek++;
+              }
+            }
+          }
+        });
+      });
+
+      document.getElementById("stat-total-sessions").textContent = totalExpectedInWeek;
+      document.getElementById("stat-missed-sessions").textContent = missedInWeek;
+      document.getElementById("stat-total-hours").textContent = `${(totalAvailableMinutes / 60).toFixed(1)}h`;
+
+      const totalLogged = completedInWeek + missedInWeek;
+      const rate = totalLogged > 0 ? Math.round((completedInWeek / totalLogged) * 100) : 0;
+      document.getElementById("stat-completion-rate").textContent = `${rate}%`;
+
+      renderCourseBars(courseStats);
+
+    } catch (e) { console.error("Progress Analysis Error:", e); }
+  }
+
+  function renderCourseBars(stats) {
+    const container = document.getElementById("course-progress-list");
+    container.innerHTML = "";
+
+    Object.keys(stats).forEach(code => {
+      const { done, total } = stats[code];
+      const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+
+      const div = document.createElement("div");
+      div.className = "progress-item-container";
+      div.innerHTML = `
+        <div class="progress-header-row">
+            <span class="course-code-label">${code}</span>
+            <span class="percent-label">${percent}%</span>
         </div>
-        <div class="bar-chart">
-          <div class="bar-column">
-            <div class="bar bg-lavender bar-h-40"></div>
-            <span>Sun</span>
-          </div>
-          <div class="bar-column">
-            <div class="bar bg-green bar-h-62"></div>
-            <span>Mon</span>
-          </div>
-          <div class="bar-column">
-            <div class="bar bg-soft-red bar-h-24"></div>
-            <span>Tue</span>
-          </div>
-          <div class="bar-column">
-            <div class="bar bg-yellow bar-h-70"></div>
-            <span>Wed</span>
-          </div>
-          <div class="bar-column">
-            <div class="bar bg-green bar-h-50"></div>
-            <span>Thu</span>
-          </div>
-          <div class="bar-column">
-            <div class="bar bar-neutral bar-h-16"></div>
-            <span>Fri</span>
-          </div>
-          <div class="bar-column">
-            <div class="bar bg-mint bar-h-56"></div>
-            <span>Sat</span>
-          </div>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill-dynamic" style="width: ${percent}%;"></div>
         </div>
-      </div>
- 
-      <!-- Progress by Course -->
-      <div class="widget">
-        <div class="widget-header">
-          <h3>Progress by Course</h3>
+        <div class="progress-footer-row">
+            <small class="footer-text">${done} completed</small>
+            <small class="footer-text">${total} total sessions</small>
         </div>
- 
-        <div class="progress-item">
-          <div class="progress-header">
-            <span class="fw-700">CS101</span>
-            <span class="fw-700">85%</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill fill-85"></div>
-          </div>
-        </div>
- 
-        <div class="progress-item">
-          <div class="progress-header">
-            <span class="fw-700">MATH203</span>
-            <span class="fw-700">60%</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill fill-60"></div>
-          </div>
-        </div>
- 
-        <div class="progress-item">
-          <div class="progress-header">
-            <span class="fw-700">ENG305</span>
-            <span class="fw-700">90%</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill fill-90"></div>
-          </div>
-        </div>
- 
-      </div>
- 
-    </div><!-- page-content -->
-  </div><!-- main-area -->
- 
-</div><!-- layout -->
- <script type="module" src="firebase-config.js"></script>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  document.getElementById("prev-week-stats").onclick = () => { weekOffset--; loadWeeklyStatistics(auth.currentUser.uid); };
+  document.getElementById("next-week-stats").onclick = () => { weekOffset++; loadWeeklyStatistics(auth.currentUser.uid); };
+  document.getElementById("logout-btn").onclick = async () => { await signOut(auth); window.location.href = "index.html"; };
+</script>
 </body>
 </html>
