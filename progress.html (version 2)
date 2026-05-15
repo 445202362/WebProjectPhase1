@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Progress & Statistics — Brain Route</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><img src="Logo.png" alt="Brain Route Logo"></div>
+      <div class="logo-text">Brain Route <small>Planner</small></div>
+    </div>
+    <a class="nav-item" href="dashboard.html">Dashboard</a>
+    <a class="nav-item" href="courses.html">Courses</a>
+    <a class="nav-item" href="deadlines.html">Deadlines</a>
+    <a class="nav-item" href="study-plan.html">Study Plan</a>
+    <a class="nav-item active" href="progress.html">Progress</a>
+    <a class="nav-item" href="reminders.html">Reminders</a>
+    <a class="nav-item" href="chatbot.html">Chat With AI</a>
+
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-student-initial">S</div>
+      <div class="user-details">
+        <div class="user-name" id="sidebar-student-name">Student</div>
+        <div class="user-status">Logged in</div>
+      </div>
+    </div>
+    <a class="nav-item logout" id="logout-btn" href="index.html">Log Out</a>
+  </div>
+
+  <div class="main-area">
+    <div class="page-header">
+      <div class="header-title-group">
+        <h2>Progress & Statistics</h2>
+        <div class="week-nav-controls">
+            <button id="prev-week-stats" class="button button-small">← Prev Week</button>
+            <span id="stats-week-label" class="week-label-text"></span>
+            <button id="next-week-stats" class="button button-small">Next Week →</button>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="user-avatar-header" id="header-initial">S</div>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="stats-grid stats-grid-4">
+        <div class="stat-card bg-lavender">
+          <div class="stat-number" id="stat-total-sessions">0</div>
+          <div class="stat-label">Expected Sessions</div>
+        </div>
+        <div class="stat-card bg-green">
+          <div class="stat-number" id="stat-completion-rate">0%</div>
+          <div class="stat-label">Completion Rate</div>
+        </div>
+        <div class="stat-card bg-soft-red">
+          <div class="stat-number" id="stat-missed-sessions">0</div>
+          <div class="stat-label">Missed Sessions</div>
+        </div>
+        <div class="stat-card bg-yellow">
+          <div class="stat-number" id="stat-total-hours">0h</div>
+          <div class="stat-label">Study Availability</div>
+        </div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-header">
+          <h3>Progress Trends by Course</h3>
+          <p class="auth-desc text-small">Showing progress for all registered courses this week.</p>
+        </div>
+        <div id="course-progress-list" class="progress-list-container"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, db } from "./firebase-config.js";
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  let weekOffset = 0;
+
+  // ── Auth guard ────────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = "index.html"; return; }
+    
+    const profileSnap = await getDoc(doc(db, "users", user.uid, "profile", "info"));
+    if (profileSnap.exists()) {
+      const data = profileSnap.data();
+      const initial = data.firstName ? data.firstName[0].toUpperCase() : "S";
+      document.getElementById("sidebar-student-initial").textContent = initial;
+      document.getElementById("header-initial").textContent = initial;
+      document.getElementById("sidebar-student-name").textContent = data.firstName || "Student";
+    }
+
+    await loadWeeklyStatistics(user.uid);
+  });
+
+  // ── Helper functions ──────────────────────────────────────────
+
+  // Returns the Sunday of the week that is (offset) weeks away from today.
+  function getStartDateOfWeek(offset) {
+      const d = new Date();
+      const day = d.getDay();
+      const diff = d.getDate() - day + (offset * 7);
+      const res = new Date(d.setDate(diff));
+      res.setHours(0,0,0,0);
+      return res;
+  }
+
+  // Converts a time string to total minutes
+  function timeToMinutes(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+
+  // Formats a Date object as "YYYY-MM-DD"
+  function normalizeDate(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+
+  // ── Load weekly statistics ────────────────────────────────────
+  async function loadWeeklyStatistics(userId) {
+    try {
+      const startDate = getStartDateOfWeek(weekOffset);
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 6);
+      endDate.setHours(23, 59, 59, 999);
+
+      // Update the week label in the header
+      document.getElementById("stats-week-label").textContent =
+        `${startDate.toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${endDate.toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
+
+      // Load courses, availability, and deadlines from Firestore
+      const coursesSnap  = await getDocs(collection(db, "users", userId, "courses"));
+      const availSnap    = await getDocs(collection(db, "users", userId, "availability"));
+      const deadlineSnap = await getDocs(collection(db, "users", userId, "deadlines"));
+
+      // Build courseStats 
+      const courseStats = {};
+      coursesSnap.forEach(function(c) {
+        courseStats[c.data().code] = { done: 0, total: 0 };
+      });
+
+      const availability = [];
+      availSnap.forEach(function(av) { availability.push(av.data()); });
+
+      const allDeadlines = [];
+      deadlineSnap.forEach(function(d) { allDeadlines.push({ id: d.id, ...d.data() }); });
+
+      let totalExpectedInWeek = 0;
+      let totalAvailableMinutes = 0;
+      let completedInWeek = 0;
+      let missedInWeek = 0;
+
+      // Calculate total available study hours for the stat card
+      for (let i = 0; i < availability.length; i++) {
+        const slot = availability[i];
+        const duration = timeToMinutes(slot.to) - timeToMinutes(slot.from);
+        if (duration <= 0) continue;
+    
+        const multiplier = (slot.day === "Every Day") ? 7 : 1;
+        totalAvailableMinutes += duration * multiplier;
+      }
+
+      const daysOfWeek = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+      // alreadyCounted prevents us from counting the same session twice
+      const alreadyCounted = {};
+
+      for (let colIdx = 0; colIdx < daysOfWeek.length; colIdx++) {
+        const dayName = daysOfWeek[colIdx];
+
+        const currentDayDate = new Date(startDate);
+        currentDayDate.setDate(startDate.getDate() + colIdx);
+        currentDayDate.setHours(0, 0, 0, 0);
+
+        const dateStr = normalizeDate(currentDayDate);
+
+        // ── Step 1: Count regular sessions ───────────────────────
+        const daySlots = availability.filter(function(s) {
+          return s.day === dayName || s.day === "Every Day";
+        });
+
+        for (let si = 0; si < daySlots.length; si++) {
+          const slot = daySlots[si];
+
+        
+          const tasksForDay = allDeadlines.filter(function(task) {
+            if (!task.dueDate) return false;
+            const dueDate = new Date(task.dueDate + "T00:00:00");
+            dueDate.setHours(0, 0, 0, 0);
+            return currentDayDate < dueDate && task.status !== "completed";
+          });
+
+          if (tasksForDay.length === 0) continue;
+
+          const slotDuration = timeToMinutes(slot.to) - timeToMinutes(slot.from);
+          if (slotDuration <= 0) continue;
+
+          for (let ti = 0; ti < tasksForDay.length; ti++) {
+            const task = tasksForDay[ti];
+
+            
+            const sessionKey = `${dateStr}_${slot.from}_${task.courseCode}`;
+            const sessionStates = task.sessionStates || {};
+            const status = sessionStates[sessionKey] || "default";
+
+            // Skip slots that were reassigned when a deadline was marked Done
+            if (status === "reassigned") continue;
+
+            // Mark this key as counted
+            const trackingKey = task.id + "_" + sessionKey;
+            alreadyCounted[trackingKey] = true;
+
+            totalExpectedInWeek++;
+            if (courseStats[task.courseCode]) {
+              courseStats[task.courseCode].total++;
+              if (status === "completed") {
+                courseStats[task.courseCode].done++;
+                completedInWeek++;
+              } else if (status === "missed") {
+                missedInWeek++;
+              }
+            }
+          }
+        }
+
+        // ── Step 2: Count bonus sessions ──────────────────────────
+        for (let di = 0; di < allDeadlines.length; di++) {
+          const task = allDeadlines[di];
+          if (task.status === "completed") continue;
+
+          const sessionStates = task.sessionStates || {};
+          const bonusKey = `${dateStr}_bonus_${task.courseCode}`;
+
+          // Check if a bonus session exists for this task on this day
+          if (bonusKey in sessionStates) {
+            const status = sessionStates[bonusKey];
+            if (status === "reassigned") continue;
+
+            // Skip if already counted
+            const trackingKey = task.id + "_" + bonusKey;
+            if (alreadyCounted[trackingKey]) continue;
+            alreadyCounted[trackingKey] = true;
+
+            totalExpectedInWeek++;
+            if (courseStats[task.courseCode]) {
+              courseStats[task.courseCode].total++;
+              if (status === "completed") {
+                courseStats[task.courseCode].done++;
+                completedInWeek++;
+              } else if (status === "missed") {
+                missedInWeek++;
+              }
+            }
+          }
+        }
+      }
+
+      // ── Update the four stat cards ────────────────────────────
+      document.getElementById("stat-total-sessions").textContent = totalExpectedInWeek;
+      document.getElementById("stat-missed-sessions").textContent = missedInWeek;
+      document.getElementById("stat-total-hours").textContent = `${(totalAvailableMinutes / 60).toFixed(1)}h`;
+
+      const totalLogged = completedInWeek + missedInWeek;
+      const rate = totalLogged > 0 ? Math.round((completedInWeek / totalLogged) * 100) : 0;
+      document.getElementById("stat-completion-rate").textContent = `${rate}%`;
+
+      renderCourseBars(courseStats);
+
+    } catch (e) { console.error("Progress Analysis Error:", e); }
+  }
+
+  // ── Render progress bars ──────────────────────────────────────
+  function renderCourseBars(stats) {
+    const container = document.getElementById("course-progress-list");
+    container.innerHTML = "";
+
+    Object.keys(stats).forEach(code => {
+      const done  = stats[code].done;
+      const total = stats[code].total;
+      const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+
+      const div = document.createElement("div");
+      div.className = "progress-item-container";
+      div.innerHTML = `
+        <div class="progress-header-row">
+            <span class="course-code-label">${code}</span>
+            <span class="percent-label">${percent}%</span>
+        </div>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill-dynamic" style="width: ${percent}%;"></div>
+        </div>
+        <div class="progress-footer-row">
+            <small class="footer-text">${done} completed</small>
+            <small class="footer-text">${total} total sessions</small>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  // ── Week navigation & logout ──────────────────────────────────
+  document.getElementById("prev-week-stats").onclick = () => { weekOffset--; loadWeeklyStatistics(auth.currentUser.uid); };
+  document.getElementById("next-week-stats").onclick = () => { weekOffset++; loadWeeklyStatistics(auth.currentUser.uid); };
+  document.getElementById("logout-btn").onclick = async () => { await signOut(auth); window.location.href = "index.html"; };
+</script>
+</body>
+</html>
