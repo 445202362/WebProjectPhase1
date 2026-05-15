@@ -337,7 +337,6 @@
 
   // ── Delete Course (with cascade delete of its deadlines) ──────
   async function deleteCourse(courseId) {
-    // First get the course code so we can find matching deadlines
     const courseSnap = await getDoc(doc(db, "users", currentUser.uid, "courses", courseId));
     if (!courseSnap.exists()) return;
     const courseCode = courseSnap.data().code;
@@ -347,7 +346,7 @@
       `This will permanently delete "${courseCode}" and all its deadlines. This cannot be undone.`,
       async () => {
         try {
-          // Step 1: find and delete all deadlines that belong to this course
+          // Step 1: Delete all deadlines that belong to this course
           const deadlinesSnap = await getDocs(
             query(collection(db, "users", currentUser.uid, "deadlines"),
                   where("courseCode", "==", courseCode))
@@ -356,7 +355,7 @@
             await deleteDoc(doc(db, "users", currentUser.uid, "deadlines", d.id));
           }
 
-          // Step 1.5: Delete all study plan sessions for this course
+          // Step 2: Delete all study plan sessions for this course
 const studyPlanSnap = await getDocs(
   query(collection(db, "users", currentUser.uid, "studyPlan"),
         where("courseCode", "==", courseCode))
@@ -365,7 +364,7 @@ for (const doc of studyPlanSnap.docs) {
   await deleteDoc(doc.ref);
 }
 
-          // Step 2: delete the course
+          // Step 3: Delete the course
           await deleteDoc(doc(db, "users", currentUser.uid, "courses", courseId));
 
           await loadCourses(); // refresh table
