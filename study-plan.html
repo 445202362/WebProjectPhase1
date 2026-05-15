@@ -15,6 +15,7 @@
       <div class="logo-icon"><img src="Logo.png" alt="Brain Route Logo"></div>
       <div class="logo-text">Brain Route <small>Planner</small></div>
     </div>
+
     <a class="nav-item" href="dashboard.html">Dashboard</a>
     <a class="nav-item" href="courses.html">Courses</a>
     <a class="nav-item" href="deadlines.html">Deadlines</a>
@@ -30,6 +31,7 @@
         <div class="user-status">Logged in</div>
       </div>
     </div>
+
     <a class="nav-item logout" id="logout-btn" href="index.html">Log Out</a>
   </div>
 
@@ -43,6 +45,7 @@
           <button id="next-week" class="button button-small">Next Week →</button>
         </div>
       </div>
+
       <div class="header-actions">
         <div class="user-avatar-header" id="header-initial">S</div>
       </div>
@@ -160,6 +163,24 @@
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   }
 
+  function timeToMinutes(t) {
+    if (!t) return 0;
+
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  }
+
+  function minutesToTime(totalMinutes) {
+    const h = Math.floor(totalMinutes / 60);
+    const m = Math.round(totalMinutes % 60);
+
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+  }
+
+  function getPriorityClass(priority) {
+    return String(priority || "medium").toLowerCase();
+  }
+
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       window.location.href = "index.html";
@@ -185,7 +206,8 @@
 
   async function toggleSessionState(taskId, sessionKey, currentState) {
     const currentIndex = STATE_CYCLE.indexOf(currentState);
-    const nextState = STATE_CYCLE[(currentIndex + 1) % STATE_CYCLE.length];
+    const safeIndex = currentIndex === -1 ? 0 : currentIndex;
+    const nextState = STATE_CYCLE[(safeIndex + 1) % STATE_CYCLE.length];
 
     try {
       await updateDoc(doc(db, "users", currentUser.uid, "deadlines", taskId), {
@@ -256,24 +278,45 @@
 
         daySlots.forEach(slot => {
           const tasksForDay = allDeadlines.filter(task => {
+            if (!task.dueDate) return false;
+
             const dueDate = new Date(task.dueDate);
             dueDate.setHours(0, 0, 0, 0);
 
             return currentDayDate < dueDate && task.status !== "completed";
           });
 
-          tasksForDay.forEach(task => {
+          const slotStartMinutes = timeToMinutes(slot.from);
+          const slotEndMinutes = timeToMinutes(slot.to);
+          const slotDuration = slotEndMinutes - slotStartMinutes;
+
+          if (slotDuration <= 0 || tasksForDay.length === 0) return;
+
+          const minutesPerTask = slotDuration / tasksForDay.length;
+
+          tasksForDay.forEach((task, taskIndex) => {
             const dateStr = normalizeDate(currentDayDate);
+
+            const startTime = minutesToTime(
+              slotStartMinutes + (taskIndex * minutesPerTask)
+            );
+
+            const endTime = minutesToTime(
+              slotStartMinutes + ((taskIndex + 1) * minutesPerTask)
+            );
+
             const sessionKey = `${dateStr}_${slot.from}_${task.courseCode}`;
             const state = task.sessionStates?.[sessionKey] || "default";
             const stateClass = STATE_SLOT_CLASS[state];
 
             const sessionDiv = document.createElement("div");
-            sessionDiv.className = `study-slot slot-${task.priority.toLowerCase()} ${stateClass}`.trim();
+            sessionDiv.className =
+              `study-slot slot-${getPriorityClass(task.priority)} ${stateClass}`.trim();
 
             sessionDiv.innerHTML = `
-              <strong>${task.courseCode}</strong>
-              <span class="slot-time">${task.title}</span>
+              <strong>${task.courseCode || "Course"}</strong>
+              <span class="slot-time">${task.title || "Study Session"}</span>
+              <span class="slot-time">${startTime} - ${endTime}</span>
             `;
 
             sessionDiv.addEventListener("click", () => {
