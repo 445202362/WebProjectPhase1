@@ -4,35 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reminders & Notifications — Smart Study Planner</title>
-
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Styles -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="layout">
-
-  <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-icon">
-        <img src="Logo.png" alt="Brain Route Logo">
-      </div>
-      <div class="logo-text">
-        Brain Route
-        <small>Planner</small>
-      </div>
-    </div> 
-  <a class="nav-item" href="dashboard.html">Dashboard</a>
+      <div class="logo-icon"><img src="Logo.png" alt="Brain Route Logo"></div>
+      <div class="logo-text">Brain Route <small>Planner</small></div>
+    </div>
+
+    <a class="nav-item" href="dashboard.html">Dashboard</a>
     <a class="nav-item" href="courses.html">Courses</a>
     <a class="nav-item" href="deadlines.html">Deadlines</a>
     <a class="nav-item" href="study-plan.html">Study Plan</a>
     <a class="nav-item" href="progress.html">Progress</a>
     <a class="nav-item active" href="reminders.html">Reminders</a>
     <a class="nav-item" href="chatbot.html">Chat With AI</a>
-
 
     <div class="sidebar-user">
       <div class="user-avatar" id="sidebar-student-initial">S</div>
@@ -42,33 +32,31 @@
       </div>
     </div>
 
-<a class="nav-item logout" href="index.html">Log Out</a>
+    <a class="nav-item logout" id="logout-btn" href="#">Log Out</a>
   </div>
 
-  <!-- Main Area -->
   <div class="main-area">
     <div class="page-header">
       <h2>Reminders & Notifications</h2>
       <div class="header-actions">
-        <div class="user-avatar-header">S</div>
+        <div class="user-avatar-header" id="header-initial">S</div>
       </div>
     </div>
 
     <div class="page-content">
-
-      <!-- Notification Settings -->
       <div class="widget">
         <div class="widget-header">
           <h3>Notification Settings</h3>
+          <span class="status-badge badge-success" id="save-status" style="display:none;">Saved</span>
         </div>
 
         <div class="notification-row">
           <div>
             <h4>Deadline Reminders</h4>
-            <p>Get notified before assignment &amp; exam deadlines</p>
+            <p>Get notified before assignment & exam deadlines</p>
           </div>
           <label class="toggle-switch">
-            <input type="checkbox" checked>
+            <input type="checkbox" id="toggle-deadline" checked>
             <span class="toggle-slider"></span>
           </label>
         </div>
@@ -79,7 +67,7 @@
             <p>Get reminded before each scheduled session</p>
           </div>
           <label class="toggle-switch">
-            <input type="checkbox" checked>
+            <input type="checkbox" id="toggle-session" checked>
             <span class="toggle-slider"></span>
           </label>
         </div>
@@ -90,7 +78,7 @@
             <p>Be notified if you miss a study session</p>
           </div>
           <label class="toggle-switch">
-            <input type="checkbox">
+            <input type="checkbox" id="toggle-missed">
             <span class="toggle-slider"></span>
           </label>
         </div>
@@ -100,22 +88,21 @@
             <h4>Remind me how early?</h4>
             <p>How much time before each event</p>
           </div>
-          <select class="select-auto">
-            <option>1 hour before</option>
-            <option>30 minutes before</option>
-            <option>2 hours before</option>
-            <option>1 day before</option>
+          <select class="select-auto" id="early-minutes">
+            <option value="60">1 hour before</option>
+            <option value="1440">1 day before</option>
+            <option value="4320">3 days before</option>
+            <option value="10080">1 week before</option>
           </select>
         </div>
-
       </div>
 
-      <!-- Active Reminders -->
       <div class="widget">
         <div class="widget-header">
           <h3>Active Reminders</h3>
-          <span class="status-badge badge-danger">3 upcoming</span>
+          <span class="status-badge badge-danger" id="reminders-badge">—</span>
         </div>
+
         <div class="table-container">
           <table>
             <thead>
@@ -124,47 +111,405 @@
                 <th>Title</th>
                 <th>Course</th>
                 <th>When</th>
-                <th>Status</th>
+                <th>Time Left</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="reminders-body">
               <tr>
-                <td><span class="status-badge badge-neutral">Session</span></td>
-                <td>Study Session</td>
-                <td>CS101</td>
-                <td>Today, 2:00 PM</td>
-                <td><span class="status-badge badge-warning">In 2 hrs</span></td>
-              </tr>
-              <tr>
-                <td><span class="status-badge badge-danger">Deadline</span></td>
-                <td>Project Phase 1</td>
-                <td>CS101</td>
-                <td>Nov 16</td>
-                <td><span class="status-badge badge-danger">2 days left</span></td>
-              </tr>
-              <tr>
-                <td><span class="status-badge badge-warning">Exam</span></td>
-                <td>Midterm Exam</td>
-                <td>MATH203</td>
-                <td>Nov 18</td>
-                <td><span class="status-badge badge-danger">4 days left</span></td>
-              </tr>
-              <tr>
-                <td><span class="status-badge badge-neutral">Session</span></td>
-                <td>Study Session</td>
-                <td>ENG305</td>
-                <td>Tomorrow 5 PM</td>
-                <td><span class="status-badge badge-neutral">Tomorrow</span></td>
+                <td colspan="5" class="td-empty">Loading...</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
+    </div>
+  </div>
+</div>
 
-    </div><!-- page-content -->
-  </div><!-- main-area -->
+<script type="module">
+  import { auth, db } from "./firebase-config.js";
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { collection, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import "./auth-guard.js";
 
-</div><!-- layout -->
-<script type="module" src="firebase-config.js"></script>
+  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+  function timeToMinutes(t) {
+    if (!t) return 0;
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  }
+
+  function minutesToTime(m) {
+    const h = Math.floor(m / 60);
+    const min = Math.round(m % 60);
+    return `${h.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`;
+  }
+
+  function normalizeDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function timeLeft(dateStr, timeStr) {
+    const now = new Date();
+    const target = timeStr
+      ? new Date(`${dateStr}T${timeStr}`)
+      : new Date(`${dateStr}T23:59:00`);
+
+    const diff = target - now;
+
+    if (diff < 0) {
+      return { label: "Missed", urgency: "past" };
+    }
+
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(mins / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days >= 1) {
+      return {
+        label: `${days} day${days > 1 ? "s" : ""} left`,
+        urgency: days <= 2 ? "high" : days <= 5 ? "medium" : "low"
+      };
+    }
+
+    if (hours >= 1) {
+      return {
+        label: `In ${hours} hr${hours > 1 ? "s" : ""}`,
+        urgency: hours <= 2 ? "high" : "medium"
+      };
+    }
+
+    return {
+      label: `In ${mins} min`,
+      urgency: "high"
+    };
+  }
+
+  function urgencyBadge(urgency, label) {
+    if (urgency === "high") {
+      return `<span class="status-badge badge-danger">${label}</span>`;
+    }
+
+    if (urgency === "medium") {
+      return `<span class="status-badge badge-warning">${label}</span>`;
+    }
+
+    if (urgency === "past") {
+      return `<span class="status-badge badge-danger">${label}</span>`;
+    }
+
+    return `<span class="status-badge badge-success">${label}</span>`;
+  }
+
+  function formatWhen(dateStr, timeStr) {
+    if (!dateStr) return "—";
+
+    const d = new Date(dateStr + "T00:00:00");
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const dateLabel = d.toDateString() === today.toDateString()
+      ? "Today"
+      : d.toDateString() === tomorrow.toDateString()
+        ? "Tomorrow"
+        : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+    return timeStr ? `${dateLabel}, ${timeStr}` : dateLabel;
+  }
+
+  function buildGeneratedSessions(deadlines, availability, earlyMinutes, includePast = false) {
+    const sessions = [];
+    const now = new Date();
+
+    const windowStart = includePast
+      ? new Date(now.getTime() - 14 * 24 * 60 * 60000)
+      : new Date(now);
+
+    const windowEnd = includePast
+      ? new Date(now)
+      : new Date(now.getTime() + earlyMinutes * 60000);
+
+    const currentDayDate = new Date(windowStart);
+    currentDayDate.setHours(0, 0, 0, 0);
+
+    while (currentDayDate <= windowEnd) {
+      const dayName = daysOfWeek[currentDayDate.getDay()];
+      const dateStr = normalizeDate(currentDayDate);
+
+      const daySlots = availability.filter(slot =>
+        slot.day === dayName || slot.day === "Every Day"
+      );
+
+      daySlots.forEach(slot => {
+        const startTime = slot.from || "00:00";
+        const endTime = slot.to || "00:00";
+        const sessionDate = new Date(`${dateStr}T${startTime}`);
+
+        if (includePast && sessionDate >= now) return;
+        if (!includePast && sessionDate < now) return;
+        if (!includePast && sessionDate > windowEnd) return;
+
+        const tasksForSession = deadlines.filter(task => {
+          if (!task.dueDate) return false;
+          if (task.status === "completed") return false;
+
+          const dueDate = new Date(task.dueDate + "T00:00:00");
+          dueDate.setHours(0, 0, 0, 0);
+
+          return currentDayDate < dueDate;
+        });
+
+        tasksForSession.forEach(task => {
+          const sessionKey = `${dateStr}_${slot.from}_${task.courseCode}`;
+          const status = (task.sessionStates && task.sessionStates[sessionKey]) || "default";
+
+          sessions.push({
+            type: "Session",
+            title: "Study Session",
+            courseCode: task.courseCode,
+            taskTitle: task.title || "Study Session",
+            date: dateStr,
+            startTime,
+            endTime,
+            status,
+            sessionKey,
+            taskId: task.id
+          });
+        });
+      });
+
+      currentDayDate.setDate(currentDayDate.getDate() + 1);
+      currentDayDate.setHours(0, 0, 0, 0);
+    }
+
+    return sessions;
+  }
+
+  async function loadProfile(user) {
+    const uid = user.uid;
+    const fallback = user.displayName || user.email || "Student";
+
+    document.getElementById("sidebar-student-name").textContent = fallback;
+    document.getElementById("sidebar-student-initial").textContent = fallback[0].toUpperCase();
+    document.getElementById("header-initial").textContent = fallback[0].toUpperCase();
+
+    try {
+      const profileSnap = await getDoc(doc(db, "users", uid, "profile", "info"));
+
+      if (profileSnap.exists()) {
+        const data = profileSnap.data();
+        const name = [data.firstName, data.lastName].filter(Boolean).join(" ") || fallback;
+
+        document.getElementById("sidebar-student-name").textContent = name;
+        document.getElementById("sidebar-student-initial").textContent = name[0].toUpperCase();
+        document.getElementById("header-initial").textContent = name[0].toUpperCase();
+      }
+    } catch (err) {
+      console.error("Profile load error:", err);
+    }
+  }
+
+  async function saveSettings(uid) {
+    const settings = {
+      deadlineReminders: document.getElementById("toggle-deadline").checked,
+      sessionReminders: document.getElementById("toggle-session").checked,
+      missedAlerts: document.getElementById("toggle-missed").checked,
+      earlyMinutes: Number(document.getElementById("early-minutes").value)
+    };
+
+    await setDoc(doc(db, "users", uid, "settings", "notifications"), settings, { merge: true });
+
+    const badge = document.getElementById("save-status");
+    badge.style.display = "inline-flex";
+
+    setTimeout(() => {
+      badge.style.display = "none";
+    }, 1800);
+  }
+
+  async function loadSettings(uid) {
+    const settingsDoc = await getDoc(doc(db, "users", uid, "settings", "notifications"));
+
+    if (!settingsDoc.exists()) return;
+
+    const s = settingsDoc.data();
+
+    document.getElementById("toggle-deadline").checked = s.deadlineReminders ?? true;
+    document.getElementById("toggle-session").checked = s.sessionReminders ?? true;
+    document.getElementById("toggle-missed").checked = s.missedAlerts ?? false;
+
+    if (s.earlyMinutes !== undefined) {
+      document.getElementById("early-minutes").value = String(s.earlyMinutes);
+    }
+  }
+
+  function addSettingsListeners(uid) {
+    ["toggle-deadline", "toggle-session", "toggle-missed", "early-minutes"].forEach(id => {
+      document.getElementById(id).addEventListener("change", async () => {
+        await saveSettings(uid);
+        await loadActiveReminders(uid);
+      });
+    });
+  }
+
+  async function loadActiveReminders(uid) {
+    const [deadlinesSnap, availabilitySnap] = await Promise.all([
+      getDocs(collection(db, "users", uid, "deadlines")),
+      getDocs(collection(db, "users", uid, "availability"))
+    ]);
+
+    const deadlines = deadlinesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const availability = availabilitySnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    const now = new Date();
+    const reminders = [];
+
+    const earlyMinutes = Number(document.getElementById("early-minutes").value);
+
+    const sessions = buildGeneratedSessions(
+      deadlines,
+      availability,
+      earlyMinutes
+    );
+
+    // Returns true if the event is upcoming and within the reminder window
+    function shouldShowUpcomingReminder(eventDate) {
+      const reminderStartTime = new Date(eventDate.getTime() - earlyMinutes * 60000);
+      return eventDate >= now && now >= reminderStartTime;
+    }
+
+    if (document.getElementById("toggle-deadline").checked) {
+      deadlines.forEach(d => {
+        if (!d.dueDate) return;
+        if (d.status === "completed") return;
+
+        const due = new Date(`${d.dueDate}T${d.time || "23:59"}`);
+
+        if (!shouldShowUpcomingReminder(due)) return;
+
+        reminders.push({
+          type: d.type === "exam" ? "Exam" : "Deadline",
+          title: d.title || "—",
+          course: d.courseCode || "—",
+          dateStr: d.dueDate,
+          timeStr: d.time || "23:59",
+          sortKey: due.getTime()
+        });
+      });
+    }
+
+    if (document.getElementById("toggle-session").checked) {
+      sessions.forEach(s => {
+        if (s.status === "completed") return;
+
+        const sessionDate = new Date(`${s.date}T${s.startTime || "00:00"}`);
+
+        // Skip past sessions (those belong to missed alerts)
+        if (sessionDate < now) return;
+        if (!shouldShowUpcomingReminder(sessionDate)) return;
+
+        reminders.push({
+          type: "Session",
+          title: "Study Session",
+          course: s.courseCode || "—",
+          dateStr: s.date,
+          timeStr: s.startTime,
+          sortKey: sessionDate.getTime()
+        });
+      });
+    }
+
+    if (document.getElementById("toggle-missed").checked) {
+      // Scan past sessions (up to 14 days back) and show any explicitly marked "missed"
+      const pastSessions = buildGeneratedSessions(deadlines, availability, earlyMinutes, true);
+      pastSessions.forEach(s => {
+        if (s.status !== "missed") return;
+
+        const sessionDate = new Date(`${s.date}T${s.startTime || "00:00"}`);
+
+        reminders.push({
+          type: "Missed",
+          title: "Missed Study Session",
+          course: s.courseCode || "—",
+          dateStr: s.date,
+          timeStr: s.startTime,
+          sortKey: sessionDate.getTime()
+        });
+      });
+    }
+
+    reminders.sort((a, b) => a.sortKey - b.sortKey);
+    renderReminders(reminders);
+  }
+
+  function renderReminders(reminders) {
+    const tbody = document.getElementById("reminders-body");
+
+    document.getElementById("reminders-badge").textContent = `${reminders.length} active`;
+
+    if (reminders.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="td-empty">No active reminders.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = reminders.map(r => {
+      const left = timeLeft(r.dateStr, r.timeStr);
+
+      let typeBadge = "";
+
+      if (r.type === "Session") {
+        typeBadge = `<span class="status-badge badge-neutral">Session</span>`;
+      } else if (r.type === "Missed") {
+        typeBadge = `<span class="status-badge badge-danger">Missed</span>`;
+      } else if (r.type === "Exam") {
+        typeBadge = `<span class="status-badge badge-warning">Exam</span>`;
+      } else {
+        typeBadge = `<span class="status-badge badge-danger">Deadline</span>`;
+      }
+
+      const timeLeftCell = r.type === "Missed"
+        ? `<span class="status-badge badge-danger">Missed</span>`
+        : urgencyBadge(left.urgency, left.label);
+
+      return `
+        <tr>
+          <td>${typeBadge}</td>
+          <td>${r.title}</td>
+          <td>${r.course}</td>
+          <td>${formatWhen(r.dateStr, r.timeStr)}</td>
+          <td>${timeLeftCell}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return;
+
+    await loadProfile(user);
+    await loadSettings(user.uid);
+    addSettingsListeners(user.uid);
+    await loadActiveReminders(user.uid);
+  });
+
+  document.getElementById("logout-btn").addEventListener("click", async (e) => {
+    e.preventDefault();
+    await signOut(auth);
+    window.location.href = "index.html";
+  });
+</script>
+
 </body>
 </html>
